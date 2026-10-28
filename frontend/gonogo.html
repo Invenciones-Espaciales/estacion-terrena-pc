@@ -403,6 +403,44 @@
 .card-verify-btn input[type="checkbox"] {
     display: none;
 }
+.card-verify-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.card-verify-name {
+    font-size: 13.5px;
+    font-weight: 900;
+}
+.card-verify-time {
+    font-size: 11px;
+    font-weight: 800;
+}
+.card-verify-time.is-go {
+    color: var(--ok);
+}
+.card-verify-time.is-nogo {
+    color: var(--gray);
+    font-style: italic;
+}
+.cl-item-title {
+    font-weight: 900;
+    color: var(--ink);
+    font-size: 14px;
+}
+.cl-item-meta {
+    margin-top: 3px;
+    font-size: 11px;
+}
+.cl-audit-time.is-go {
+    color: var(--ok);
+    font-weight: 900;
+}
+.cl-audit-time.is-nogo {
+    color: var(--gray);
+    font-style: italic;
+}
 
 /* ===== COLUMN 2: 8-SUBSYSTEM POLL STATION (CLEAN & LARGE) ===== */
 .subsys-poll-grid {
@@ -660,6 +698,15 @@
         flex-wrap: wrap !important;
         justify-content: space-between !important;
     }
+    .hero-title {
+        white-space: normal !important;
+        font-size: 16px !important;
+        line-height: 1.25 !important;
+    }
+    .hero-sub {
+        white-space: normal !important;
+        font-size: 12px !important;
+    }
     .grid-cards {
         display: flex !important;
         flex-direction: column !important;
@@ -678,6 +725,28 @@
         height: auto !important;
         min-height: auto !important;
         overflow: visible !important;
+    }
+    .stab-box {
+        flex: none !important;
+        width: 100% !important;
+        min-height: 110px !important;
+        margin-bottom: 8px !important;
+        box-sizing: border-box !important;
+    }
+    .stab-canvas-row {
+        flex: none !important;
+        height: 44px !important;
+        width: 100% !important;
+    }
+    .stab-canvas {
+        height: 44px !important;
+        width: 100% !important;
+    }
+    .verify-footer-group {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        width: 100% !important;
     }
     .checklist-table-wrap {
         max-height: none !important;
@@ -719,11 +788,8 @@
 
         <div class="hgroup">
             <div class="hcell"><span class="k">HORA LOCAL</span><span class="v clock num" id="localTime">00:00:00</span></div>
-            <div class="hcell"><span class="k">TIEMPO DE MISIÓN</span><span class="v clock num">T+ <span id="clock">00:00:00</span></span></div>
             <div class="hcell"><span class="k">FASE DE VUELO</span><span class="phase" id="phase">---</span></div>
             <div class="hcell"><span class="k">SEÑAL RF (RSSI)</span><span class="v num nd" id="rssi">N/D</span></div>
-            <div class="hcell"><span class="k">TEMP. IMU</span><span class="temp-pill" id="tempPill">IMU N/D</span></div>
-            <div class="hcell"><span class="k">PÉRDIDA DE PAQUETES</span><span class="v num" id="lossPercent">0,0 %</span></div>
             <div class="hcell"><span class="k">ENLACE</span><span class="v" style="font-size:15px"><span class="dot" id="linkDot"></span><span id="linkStatus">DESCONECTADO</span></span></div>
         </div>
     </header>
@@ -834,7 +900,10 @@
 
             <div class="verify-footer-group">
                 <label class="card-verify-btn" for="chkVerifyLink">
-                    <span>Enlace RF</span>
+                    <div class="card-verify-text">
+                        <span class="card-verify-name">Enlace RF</span>
+                        <span class="card-verify-time num" id="timeVerifyLink"></span>
+                    </div>
                     <input type="checkbox" id="chkVerifyLink">
                     <div class="gonogo-toggle is-nogo" id="tglVerifyLink">
                         <span class="t-seg nogo">NO-GO</span>
@@ -842,7 +911,10 @@
                     </div>
                 </label>
                 <label class="card-verify-btn" for="chkVerifySensors">
-                    <span>Sensores</span>
+                    <div class="card-verify-text">
+                        <span class="card-verify-name">Sensores</span>
+                        <span class="card-verify-time num" id="timeVerifySensors"></span>
+                    </div>
                     <input type="checkbox" id="chkVerifySensors">
                     <div class="gonogo-toggle is-nogo" id="tglVerifySensors">
                         <span class="t-seg nogo">NO-GO</span>
@@ -864,7 +936,10 @@
             </div>
 
             <label class="card-verify-btn" for="chkVerifyStation">
-                <span> Subsistemas y Estación Terrena</span>
+                <div class="card-verify-text">
+                    <span class="card-verify-name">Subsistemas y Estación Terrena</span>
+                    <span class="card-verify-time num" id="timeVerifyStation"></span>
+                </div>
                 <input type="checkbox" id="chkVerifyStation">
                 <div class="gonogo-toggle is-go" id="tglVerifyStation">
                     <span class="t-seg nogo">NO-GO</span>
@@ -1054,6 +1129,7 @@ const state = {
     verifiedLink: false,
     verifiedSensors: false,
     verifiedStation: true,
+    verifiedTimes: { link: null, sensors: null, station: null },
     manualChecks: {},
 
     liftoffDetected: false,
@@ -1069,6 +1145,7 @@ function savePersistedState() {
             verifiedLink: state.verifiedLink,
             verifiedSensors: state.verifiedSensors,
             verifiedStation: state.verifiedStation,
+            verifiedTimes: state.verifiedTimes,
             manualChecks: state.manualChecks
         };
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -1083,6 +1160,7 @@ function loadPersistedState() {
         if (typeof data.verifiedLink === "boolean") state.verifiedLink = data.verifiedLink;
         if (typeof data.verifiedSensors === "boolean") state.verifiedSensors = data.verifiedSensors;
         if (typeof data.verifiedStation === "boolean") state.verifiedStation = data.verifiedStation;
+        if (data.verifiedTimes && typeof data.verifiedTimes === "object") state.verifiedTimes = data.verifiedTimes;
         if (data.manualChecks && typeof data.manualChecks === "object") state.manualChecks = data.manualChecks;
     } catch (_) {}
 }
@@ -1109,10 +1187,19 @@ function drawPacketRibbon() {
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
+    const now = Date.now();
+    const silenceSec = state.lastPacketAt ? (now - state.lastPacketAt) / 1000 : 999;
+    const isLive = state.connected && state.lastPacketAt !== null && silenceSec <= 0.6;
+
     const slots = state.packetSlots;
     const total = slots.length; // 120 blocks
     const gap = 1;
     const blockW = Math.max(1.5, (w - (total - 1) * gap) / total);
+
+    ctx.save();
+    if (!isLive) {
+        ctx.globalAlpha = 0.22;
+    }
 
     for (let i = 0; i < total; i++) {
         const s = slots[i];
@@ -1128,6 +1215,27 @@ function drawPacketRibbon() {
         else ctx.fillStyle = "#1e293b";
 
         ctx.fillRect(x, 4, blockW, h - 8);
+    }
+    ctx.restore();
+
+    // High-contrast banner overlay when data stops arriving
+    if (!isLive) {
+        ctx.fillStyle = "rgba(6, 9, 14, 0.85)";
+        ctx.fillRect(0, 0, w, h);
+
+        const isBad = !state.connected || silenceSec > 2.0;
+        ctx.fillStyle = isBad ? "#ef4444" : "#f59e0b";
+        ctx.font = "900 11px 'JetBrains Mono', Consolas, monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        let bannerMsg = "SIN TELEMETRÍA (INACTIVO)";
+        if (!state.connected) {
+            bannerMsg = "ENLACE DESCONECTADO";
+        } else if (silenceSec <= 2.0) {
+            bannerMsg = "SILENCIO DE TELEMETRÍA";
+        }
+        ctx.fillText(bannerMsg, w / 2, h / 2);
     }
 }
 
@@ -1290,8 +1398,19 @@ function evaluateSubsystems() {
     const silence = state.lastPacketAt ? (now - state.lastPacketAt) / 1000 : 999;
 
     // 1. COMMS
-    const commsOk = state.connected && silence <= 0.35 && state.loss5s <= 5.0 && state.rxRate >= 5.0;
-    const commsVal = state.connected ? `${state.rxRate.toFixed(1)} Hz • Pérd: ${state.loss5s.toFixed(1)}%` : "SIN ENLACE";
+    const commsLive = state.connected && silence <= 0.6;
+    const rateVal = commsLive ? state.rxRate : 0;
+    const commsOk = commsLive && state.loss5s <= 5.0 && rateVal >= 5.0;
+    let commsVal = "SIN ENLACE";
+    if (state.connected) {
+        if (silence <= 0.6) {
+            commsVal = `${state.rxRate.toFixed(1)} Hz • Pérd: ${state.loss5s.toFixed(1)}%`;
+        } else if (silence <= 2.0) {
+            commsVal = `SILENCIO (${silence.toFixed(1)}s)`;
+        } else {
+            commsVal = "SIN TELEMETRÍA";
+        }
+    }
 
     // 2. BARO
     const baroOk = state.altitude !== null && Math.abs(state.altitude) <= CFG.altitude_tol_m;
@@ -1410,8 +1529,24 @@ function renderDashboard() {
     // 3. Column 1: Packet Integrity & Stability
     $("linkStabTimer").textContent = formatTimerMinSec(state.linkStabMs);
     $("linkStabLoss").textContent = `${state.loss5s.toFixed(1)}%`;
-    $("mLinkState").textContent = state.connected ? "Conectado" : "Desconectado";
-    $("mLinkRate").textContent = `${state.rxRate.toFixed(1)} Hz`;
+    const mLinkStateEl = $("mLinkState");
+    if (mLinkStateEl) {
+        if (!state.connected) {
+            mLinkStateEl.textContent = "Desconectado";
+            mLinkStateEl.style.color = "var(--bad)";
+        } else if (silence <= 0.6) {
+            mLinkStateEl.textContent = "Activo";
+            mLinkStateEl.style.color = "var(--ok)";
+        } else if (silence <= 2.0) {
+            mLinkStateEl.textContent = "Silencio";
+            mLinkStateEl.style.color = "var(--warn)";
+        } else {
+            mLinkStateEl.textContent = "Sin señal";
+            mLinkStateEl.style.color = "var(--bad)";
+        }
+    }
+    const currentRate = silence <= 0.6 ? state.rxRate : 0;
+    $("mLinkRate").textContent = `${currentRate.toFixed(1)} Hz`;
 
     $("altStabTimer").textContent = formatTimerMinSec(state.altStabMs);
     $("accStabTimer").textContent = formatTimerMinSec(state.accStabMs);
@@ -1440,16 +1575,47 @@ function renderDashboard() {
     if (chkLink) chkLink.checked = state.verifiedLink;
     const tglLink = $("tglVerifyLink");
     if (tglLink) tglLink.className = `gonogo-toggle ${state.verifiedLink ? "is-go" : "is-nogo"}`;
+    const timeLinkEl = $("timeVerifyLink");
+    if (timeLinkEl) {
+        if (state.verifiedLink && state.verifiedTimes?.link) {
+            timeLinkEl.textContent = `✔ Aprobado: ${state.verifiedTimes.link}`;
+            timeLinkEl.className = "card-verify-time num is-go";
+        } else {
+            timeLinkEl.textContent = "Pendiente de verificación";
+            timeLinkEl.className = "card-verify-time is-nogo";
+        }
+    }
 
     const chkSensors = $("chkVerifySensors");
     if (chkSensors) chkSensors.checked = state.verifiedSensors;
     const tglSensors = $("tglVerifySensors");
     if (tglSensors) tglSensors.className = `gonogo-toggle ${state.verifiedSensors ? "is-go" : "is-nogo"}`;
+    const timeSensorsEl = $("timeVerifySensors");
+    if (timeSensorsEl) {
+        if (state.verifiedSensors && state.verifiedTimes?.sensors) {
+            timeSensorsEl.textContent = `✔ Aprobado: ${state.verifiedTimes.sensors}`;
+            timeSensorsEl.className = "card-verify-time num is-go";
+        } else {
+            timeSensorsEl.textContent = "Pendiente de verificación";
+            timeSensorsEl.className = "card-verify-time is-nogo";
+        }
+    }
 
     const chkStation = $("chkVerifyStation");
     if (chkStation) chkStation.checked = state.verifiedStation;
     const tglStation = $("tglVerifyStation");
     if (tglStation) tglStation.className = `gonogo-toggle ${state.verifiedStation ? "is-go" : "is-nogo"}`;
+    const timeStationEl = $("timeVerifyStation");
+    if (timeStationEl) {
+        if (state.verifiedStation) {
+            const tStr = state.verifiedTimes?.station || "Nominal";
+            timeStationEl.textContent = `✔ Aprobado: ${tStr}`;
+            timeStationEl.className = "card-verify-time num is-go";
+        } else {
+            timeStationEl.textContent = "Pendiente de verificación";
+            timeStationEl.className = "card-verify-time is-nogo";
+        }
+    }
 
     // 4. Column 2: 8-Subsystem Poll Station (Clean 2-row cards)
     const subsysGrid = $("subsysPollGrid");
@@ -1570,12 +1736,19 @@ function renderManualChecklistTable() {
     tbody.innerHTML = "";
 
     CFG.manual_checklist.forEach(item => {
-        const entry = state.manualChecks[item.id] || { verified: false };
+        const entry = state.manualChecks[item.id] || { verified: false, time: null };
         const tr = document.createElement("tr");
         if (entry.verified) tr.className = "verified";
 
+        const timeHtml = entry.verified && entry.time
+            ? `<span class="cl-audit-time num is-go">✔ Aprobado: ${escapeHtml(entry.time)}</span>`
+            : `<span class="cl-audit-time is-nogo">Pendiente de firma (${escapeHtml(item.responsible || "Mecánica")})</span>`;
+
         tr.innerHTML = `
-            <td style="font-weight:900; color:var(--ink);">${item.item}</td>
+            <td>
+                <div class="cl-item-title">${escapeHtml(item.item)}</div>
+                <div class="cl-item-meta">${timeHtml}</div>
+            </td>
             <td style="text-align:right;">
                 <div class="gonogo-toggle ${entry.verified ? "is-go" : "is-nogo"} cl-badge ${entry.verified ? "ok" : "pending"}">
                     <span class="t-seg nogo">NO-GO</span>
@@ -1586,7 +1759,8 @@ function renderManualChecklistTable() {
 
         tr.addEventListener("click", () => {
             const nowVerif = !entry.verified;
-            state.manualChecks[item.id] = { verified: nowVerif };
+            const nowStr = nowVerif ? new Date().toLocaleTimeString("es-AR", { hour12: false }) : null;
+            state.manualChecks[item.id] = { verified: nowVerif, time: nowStr };
             savePersistedState();
             renderManualChecklistTable();
             renderDashboard();
@@ -1597,7 +1771,7 @@ function renderManualChecklistTable() {
                 item.id,
                 item.item,
                 nowVerif ? "GO" : "NO-GO",
-                { responsible: item.responsible || "Mecánica" }
+                { responsible: item.responsible || "Mecánica", timestamp_str: nowStr }
             );
         });
 
@@ -1732,6 +1906,8 @@ let socket = null;
 function connect() {
     const proto = location.protocol === "https:" ? "wss" : "ws";
     socket = new WebSocket(`${proto}://${location.host}/ws`);
+    window.socket = socket;
+    window.handleTelemetry = handleTelemetry;
     socket.onopen = () => { state.connected = true; };
     socket.onmessage = e => {
         try {
@@ -1778,9 +1954,20 @@ async function loadStatus() {
    ============================================================ */
 
 let lastFrameTime = performance.now();
+let lastSilentSlotPush = 0;
 function frameLoop(time) {
     const dt = time - lastFrameTime;
     lastFrameTime = time;
+
+    const now = Date.now();
+    const silence = state.lastPacketAt ? now - state.lastPacketAt : 999999;
+    if (silence > 300) {
+        if (now - lastSilentSlotPush >= 100) {
+            lastSilentSlotPush = now;
+            state.packetSlots.push(0);
+            if (state.packetSlots.length > 120) state.packetSlots.shift();
+        }
+    }
 
     updateStabilityEngines(dt);
     renderDashboard();
@@ -1818,6 +2005,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     $("chkVerifyLink")?.addEventListener("change", e => {
         state.verifiedLink = e.target.checked;
+        const nowStr = state.verifiedLink ? new Date().toLocaleTimeString("es-AR", { hour12: false }) : null;
+        if (!state.verifiedTimes) state.verifiedTimes = {};
+        state.verifiedTimes.link = nowStr;
         savePersistedState();
         renderDashboard();
         logAuditEvent(
@@ -1830,6 +2020,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     $("chkVerifySensors")?.addEventListener("change", e => {
         state.verifiedSensors = e.target.checked;
+        const nowStr = state.verifiedSensors ? new Date().toLocaleTimeString("es-AR", { hour12: false }) : null;
+        if (!state.verifiedTimes) state.verifiedTimes = {};
+        state.verifiedTimes.sensors = nowStr;
         savePersistedState();
         renderDashboard();
         logAuditEvent(
@@ -1842,6 +2035,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     $("chkVerifyStation")?.addEventListener("change", e => {
         state.verifiedStation = e.target.checked;
+        const nowStr = state.verifiedStation ? new Date().toLocaleTimeString("es-AR", { hour12: false }) : null;
+        if (!state.verifiedTimes) state.verifiedTimes = {};
+        state.verifiedTimes.station = nowStr;
         savePersistedState();
         renderDashboard();
         logAuditEvent(
@@ -1875,6 +2071,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             state.verifiedLink = false;
             state.verifiedSensors = false;
             state.verifiedStation = false;
+            state.verifiedTimes = { link: null, sensors: null, station: null };
             state.manualChecks = {};
             savePersistedState();
             renderManualChecklistTable();

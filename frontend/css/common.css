@@ -941,6 +941,9 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
     .hgroup {
         grid-template-columns: repeat(2, 1fr) !important;
     }
+    .hgroup .hcell:last-child:nth-child(odd) {
+        grid-column: span 2 !important;
+    }
     .annun-grid {
         grid-template-columns: 1fr !important;
         gap: 6px !important;
