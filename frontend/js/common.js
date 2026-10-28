@@ -1107,8 +1107,8 @@ if (document.readyState === "loading") {
         updateDemoHudUI();
     }, 100);
 
-    // Jump to specific simulation time and re-hydrate page state cleanly
-    function jumpToSimTime(targetSec) {
+    // Jump to specific simulation time and update page telemetry in-place smoothly
+    function jumpToSimTime(targetSec, reload = false) {
         const clamped = Math.max(0, Math.min(CYCLE_DURATION_S - 0.1, Number(targetSec) || 0));
         demoEngine.simTimeSec = clamped;
         demoEngine.frameSeq = Math.max(100, Math.floor(clamped * 10));
@@ -1116,8 +1116,32 @@ if (document.readyState === "loading") {
             sessionStorage.setItem("gs_demo_sim_time", clamped.toFixed(1));
         } catch (e) {}
 
-        // Reload page so 60s history, charts, GPS route, and flight milestones rebuild cleanly at the new T_sim
-        window.location.reload();
+        // Reset flight liftoff flags if rewinding before launch (t < 155s)
+        if (clamped < 155.0) {
+            if (window.state) {
+                window.state.liftoffDetected = false;
+                window.state.liftoffAt = null;
+            }
+        } else {
+            if (window.state && !window.state.liftoffDetected) {
+                window.state.liftoffDetected = true;
+                window.state.liftoffAt = Date.now() - (clamped - 155.0) * 1000;
+            }
+        }
+
+        if (reload) {
+            window.location.reload();
+            return;
+        }
+
+        // Broadcast telemetry frame immediately over all open WebSockets
+        const frame = calculateDemoFrame(demoEngine.simTimeSec, demoEngine.frameSeq, Date.now());
+        const msg = { type: "telemetry", ...frame };
+        for (const ws of demoEngine.sockets) {
+            ws._sendJson(msg);
+        }
+
+        updateDemoHudUI();
     }
     window.jumpToDemoTime = jumpToSimTime;
 
@@ -1139,6 +1163,7 @@ if (document.readyState === "loading") {
         const timeEl = document.getElementById("demoHudTime");
         const sliderEl = document.getElementById("demoHudSlider");
         const phaseEl = document.getElementById("demoHudPhase");
+        const minBtn = document.getElementById("demoBtnMin");
         if (timeEl) {
             timeEl.textContent = `${t.toFixed(1)}s / 290s`;
         }
@@ -1147,6 +1172,10 @@ if (document.readyState === "loading") {
         }
         if (phaseEl) {
             phaseEl.textContent = getPhaseBadgeLabel(t);
+        }
+        if (minBtn) {
+            minBtn.textContent = demoEngine.minimized ? "▢" : "▼";
+            minBtn.title = demoEngine.minimized ? "Expandir barra de control" : "Minimizar barra de control";
         }
 
         const presets = document.querySelectorAll(".demo-preset-btn");
@@ -1164,25 +1193,29 @@ if (document.readyState === "loading") {
         hud.id = "demoControlHud";
         hud.className = "demo-hud";
         hud.innerHTML = `
-            <span class="demo-hud-badge" title="Simulador de telemetría en vivo ejecutándose en el navegador">
-                🚀 DEMO <span id="demoHudPhase" style="opacity:0.9; font-weight:800;"></span>
-            </span>
-            <button type="button" class="demo-hud-btn play-btn" id="demoBtnPlay" title="Pausar / Reanudar simulación">⏸</button>
-            <div class="demo-hud-scrubber-wrap" id="demoHudBody">
-                <input type="range" class="demo-hud-slider" id="demoHudSlider" min="0" max="290" step="0.5" value="${demoEngine.simTimeSec.toFixed(1)}" title="Deslizar en la línea de tiempo de la misión (0s - 290s)">
+            <div class="demo-hud-header">
+                <span class="demo-hud-badge" title="Simulador de telemetría en vivo">
+                    🚀 DEMO <span id="demoHudPhase" style="opacity:0.9; font-weight:800;"></span>
+                </span>
+                <button type="button" class="demo-hud-btn play-btn" id="demoBtnPlay" title="Pausar / Reanudar simulación">⏸</button>
                 <span class="demo-hud-time" id="demoHudTime">${demoEngine.simTimeSec.toFixed(1)}s / 290s</span>
-                <span class="demo-hud-sep"></span>
-                <div class="demo-hud-presets">
-                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="125" data-start="60" data-end="150" title="Saltar a Rampa Estabilizada (Todos los subsistemas GO)">Rampa GO</button>
-                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="152" data-start="150" data-end="176" title="Saltar a T-3s antes de ignición y despegue">Despegue</button>
-                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="176" data-start="176" data-end="206" title="Saltar a Apogeo (1850m) y eyección de Drogue">Apogeo</button>
-                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="206" data-start="206" data-end="226" title="Saltar a apertura de Paracaídas Principal (550m)">Main Chute</button>
-                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="227" data-start="226" data-end="291" title="Saltar a toque en tierra y baliza de recuperación">Aterrizaje</button>
+                <div class="demo-hud-header-actions">
+                    <button type="button" class="demo-hud-btn" id="demoBtnSpeed" title="Velocidad de reproducción">1x</button>
+                    <button type="button" class="demo-hud-btn min-btn" id="demoBtnMin" title="Minimizar / Expandir control demo">▼</button>
                 </div>
-                <span class="demo-hud-sep"></span>
-                <button type="button" class="demo-hud-btn" id="demoBtnSpeed" title="Cambiar velocidad de reproducción">1x</button>
             </div>
-            <button type="button" class="demo-hud-btn" id="demoBtnMin" title="Minimizar / Expandir barra de control Demo">_</button>
+            <div class="demo-hud-body" id="demoHudBody">
+                <div class="demo-hud-slider-wrap">
+                    <input type="range" class="demo-hud-slider" id="demoHudSlider" min="0" max="290" step="0.5" value="${demoEngine.simTimeSec.toFixed(1)}" title="Línea de tiempo (0s - 290s)">
+                </div>
+                <div class="demo-hud-presets">
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="125" data-start="60" data-end="150" title="Rampa Estabilizada">Rampa GO</button>
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="152" data-start="150" data-end="176" title="Despegue (T-3s)">Despegue</button>
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="176" data-start="176" data-end="206" title="Apogeo y Drogue">Apogeo</button>
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="206" data-start="206" data-end="226" title="Paracaídas Principal">Main Chute</button>
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="227" data-start="226" data-end="291" title="Aterrizaje">Aterrizaje</button>
+                </div>
+            </div>
         `;
 
         document.body.appendChild(hud);
@@ -1195,6 +1228,9 @@ if (document.readyState === "loading") {
         });
 
         const slider = document.getElementById("demoHudSlider");
+        slider?.addEventListener("input", e => {
+            jumpToSimTime(parseFloat(e.target.value));
+        });
         slider?.addEventListener("change", e => {
             jumpToSimTime(parseFloat(e.target.value));
         });
@@ -1219,8 +1255,9 @@ if (document.readyState === "loading") {
         minBtn?.addEventListener("click", () => {
             demoEngine.minimized = !demoEngine.minimized;
             hud.classList.toggle("minimized", demoEngine.minimized);
-            if (bodyWrap) bodyWrap.style.display = demoEngine.minimized ? "none" : "flex";
-            minBtn.textContent = demoEngine.minimized ? "▢" : "_";
+            if (bodyWrap) bodyWrap.style.display = demoEngine.minimized ? "none" : "";
+            minBtn.textContent = demoEngine.minimized ? "▢" : "▼";
+            minBtn.title = demoEngine.minimized ? "Expandir barra de control" : "Minimizar barra de control";
         });
 
         updateDemoHudUI();

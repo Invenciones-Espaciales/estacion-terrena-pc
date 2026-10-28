@@ -957,31 +957,51 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
 
 .demo-hud {
     position: fixed;
-    bottom: 6px;
+    bottom: 8px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 980;
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 5px;
-    padding: 4px 8px;
-    background: rgba(9, 13, 20, 0.94);
+    gap: 8px;
+    padding: 5px 10px;
+    background: rgba(9, 13, 20, 0.95);
     border: 2px solid #38bdf8;
-    border-radius: 5px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65);
+    border-radius: 6px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
     color: #f0f6fc;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    user-select: none;
+    backdrop-filter: blur(8px);
     max-width: calc(100vw - 16px);
     box-sizing: border-box;
-    user-select: none;
-    backdrop-filter: blur(6px);
+    transition: all 0.2s ease;
 }
 
 .demo-hud.minimized {
-    left: auto;
-    right: 10px;
-    transform: none;
-    padding: 3px 8px;
+    left: auto !important;
+    right: 12px !important;
+    bottom: 8px !important;
+    transform: none !important;
+    padding: 4px 8px !important;
+    width: auto !important;
+    max-width: none !important;
+    gap: 6px !important;
+}
+
+.demo-hud-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.demo-hud-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    order: 10;
 }
 
 .demo-hud-badge {
@@ -990,10 +1010,10 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
     gap: 4px;
     background: #0284c7;
     color: #ffffff;
-    font-size: 9.5px;
+    font-size: 10px;
     font-weight: 900;
-    letter-spacing: 0.05em;
-    padding: 2px 6px;
+    letter-spacing: .04em;
+    padding: 2px 7px;
     border-radius: 3px;
     white-space: nowrap;
 }
@@ -1002,17 +1022,18 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 22px;
-    padding: 0 7px;
-    font-size: 10px;
+    height: 24px;
+    padding: 0 8px;
+    font-size: 10.5px;
     font-weight: 900;
-    letter-spacing: 0.03em;
+    letter-spacing: .02em;
     background: #17202d;
     color: #e2e8f0;
     border: 1.5px solid #2d4057;
     border-radius: 3px;
     cursor: pointer;
     white-space: nowrap;
+    touch-action: manipulation;
     transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
@@ -1029,7 +1050,7 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
 }
 
 .demo-hud-btn.play-btn {
-    min-width: 26px;
+    min-width: 28px;
     background: #064e3b;
     border-color: #10b981;
     color: #10b981;
@@ -1041,23 +1062,31 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
     color: #f59e0b;
 }
 
-.demo-hud-sep {
-    width: 1px;
-    height: 16px;
-    background: #2d4057;
-    margin: 0 2px;
-    flex-shrink: 0;
+.demo-hud-btn.min-btn {
+    font-size: 11px;
+    padding: 0 6px;
+    color: var(--accent, #38bdf8);
 }
 
-.demo-hud-scrubber-wrap {
+.demo-hud-body {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+    order: 5;
+}
+
+.demo-hud.minimized .demo-hud-body {
+    display: none !important;
+}
+
+.demo-hud-slider-wrap {
+    display: flex;
+    align-items: center;
 }
 
 .demo-hud-slider {
-    width: 96px;
-    height: 5px;
+    width: 90px;
+    height: 6px;
     accent-color: #38bdf8;
     cursor: pointer;
     margin: 0;
@@ -1068,7 +1097,7 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
     font-size: 10.5px;
     font-weight: 900;
     color: #38bdf8;
-    min-width: 72px;
+    min-width: 68px;
     text-align: right;
     white-space: nowrap;
 }
@@ -1079,37 +1108,74 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
     gap: 3px;
 }
 
-@media (max-width: 1050px) {
+/* Responsive adjustment for Mobile viewports */
+@media (max-width: 900px) {
     .demo-hud {
-        flex-wrap: wrap;
-        justify-content: center;
-        padding: 4px 6px;
-        gap: 4px;
-        width: calc(100vw - 12px);
-        max-width: calc(100vw - 12px);
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: calc(100vw - 16px) !important;
+        max-width: 440px !important;
+        bottom: 6px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        padding: 6px 8px !important;
+        gap: 6px !important;
+        border-radius: 8px !important;
     }
-    .demo-hud-scrubber-wrap {
-        flex-wrap: wrap;
-        justify-content: center;
-        max-width: 100%;
-        gap: 3px;
+
+    .demo-hud.minimized {
+        width: auto !important;
+        max-width: none !important;
+        left: auto !important;
+        right: 10px !important;
+        bottom: 8px !important;
+        transform: none !important;
+        padding: 4px 8px !important;
     }
-    .demo-hud-presets {
-        flex-wrap: wrap;
-        justify-content: center;
-        max-width: 100%;
-        gap: 2px;
+
+    .demo-hud-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 4px !important;
     }
-    .demo-hud-btn {
-        padding: 0 5px;
-        font-size: 9px;
-        height: 20px;
+
+    .demo-hud-body {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 6px !important;
     }
-    .demo-hud-sep {
-        display: none;
+
+    .demo-hud-slider-wrap {
+        width: 100% !important;
     }
+
     .demo-hud-slider {
-        width: 64px;
+        width: 100% !important;
+        height: 10px !important;
+    }
+
+    .demo-hud-presets {
+        display: grid !important;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+
+    .demo-hud-presets .demo-hud-btn {
+        width: 100% !important;
+        height: 28px !important;
+        font-size: 10px !important;
+        padding: 0 2px !important;
+        text-align: center !important;
+    }
+
+    .demo-hud-header .demo-hud-btn {
+        height: 26px !important;
+        padding: 0 8px !important;
+        font-size: 11px !important;
     }
 }
 
