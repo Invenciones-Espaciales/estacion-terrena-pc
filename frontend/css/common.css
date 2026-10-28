@@ -803,11 +803,20 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
    ============================================================ */
 
 @media (max-width: 900px) {
-    html, body {
+    html {
         height: auto !important;
         min-height: 100% !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    body {
+        height: auto !important;
+        min-height: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+        touch-action: pan-y;
     }
 
     .app {
@@ -817,7 +826,7 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
         min-height: 100vh !important;
         overflow-x: hidden !important;
         overflow-y: visible !important;
-        padding: 6px !important;
+        padding: 6px 6px 84px 6px !important;
         box-sizing: border-box !important;
     }
 

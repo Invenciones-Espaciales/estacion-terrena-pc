@@ -365,11 +365,18 @@
 
 /* ===== RESPONSIVE DESIGN (MÓVILES / PANTALLAS PEQUEÑAS) ===== */
 @media (max-width: 900px) {
-    html, body {
+    html {
         height: auto !important;
         min-height: 100% !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
+    }
+
+    body {
+        height: auto !important;
+        min-height: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
     }
 
     .app {
@@ -381,7 +388,7 @@
         overflow-y: visible !important;
         display: flex !important;
         flex-direction: column !important;
-        padding: 6px !important;
+        padding: 6px 6px 84px 6px !important;
         gap: 8px !important;
     }
 

@@ -151,11 +151,18 @@ table.t td { padding: 3px 4px; border-bottom: 1px solid var(--soft-border); whit
    Permite scroll vertical en teléfonos manteniendo 0-overflow
    ============================================================ */
 @media (max-width: 900px) {
-    html, body {
+    html {
         height: auto !important;
         min-height: 100% !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
+    }
+
+    body {
+        height: auto !important;
+        min-height: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
     }
 
     .app {
@@ -165,7 +172,7 @@ table.t td { padding: 3px 4px; border-bottom: 1px solid var(--soft-border); whit
         flex-direction: column !important;
         overflow-x: hidden !important;
         overflow-y: visible !important;
-        padding: 6px !important;
+        padding: 6px 6px 84px 6px !important;
         gap: 8px !important;
     }
 

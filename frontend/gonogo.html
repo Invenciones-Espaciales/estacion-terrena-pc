@@ -645,21 +645,52 @@
         min-height: 100vh !important;
         display: flex !important;
         flex-direction: column !important;
-        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+        padding: 6px 6px 84px 6px !important;
     }
     .hero-banner {
         height: auto !important;
         flex-direction: column !important;
         align-items: stretch !important;
         padding: 10px !important;
+        flex: none !important;
     }
     .hero-right {
         flex-wrap: wrap !important;
         justify-content: space-between !important;
     }
     .grid-cards {
-        grid-template-columns: 1fr !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
     }
+    .dash-card {
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+        flex: none !important;
+    }
+    .card-body-flex {
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+    }
+    .checklist-table-wrap {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .subsys-poll-grid {
+        grid-template-columns: 1fr 1fr !important;
+        height: auto !important;
+        flex: none !important;
+    }
+}
+
+@media (max-width: 480px) {
     .subsys-poll-grid {
         grid-template-columns: 1fr !important;
     }
