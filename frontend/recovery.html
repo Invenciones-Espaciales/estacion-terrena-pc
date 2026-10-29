@@ -337,10 +337,13 @@
     font-weight: 950;
     white-space: nowrap;
     color: var(--accent);
+    flex-shrink: 0;
 }
 .tl-label {
     font-weight: 800;
     color: var(--ink);
+    min-width: 0;
+    word-break: break-word;
 }
 
 /* TOAST COPIADO */
@@ -472,6 +475,16 @@
 
     .card {
         flex-shrink: 0 !important;
+        flex: none !important;
+        height: auto !important;
+        min-height: auto !important;
+    }
+
+    .timeline-scroll {
+        flex: none !important;
+        min-height: 80px !important;
+        max-height: 280px !important;
+        overflow-y: auto !important;
     }
 }
 

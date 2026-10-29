@@ -1029,11 +1029,12 @@ function ingest(message, isHistory = false) {
 
 /* ---------- gráficos ---------- */
 
-/* Borde derecho de los gráficos: último timestamp de trama + tiempo transcurrido
-   desde su llegada (máx. 250 ms), para que la ventana se desplace de forma continua. */
+/* Borde derecho de los gráficos: avanza de forma continua en tiempo real.
+   Cuando no llegan datos o se desconecta el enlace, el eje temporal sigue avanzando
+   para que los gráficos no queden congelados y la telemetría fluya hacia la izquierda. */
 function chartEnd() {
-    if (state.lastChartTimestamp === null) return 0;
-    return state.lastChartTimestamp + Math.min(250, Date.now() - state.lastArrivalAt);
+    if (state.lastChartTimestamp === null) return Date.now();
+    return state.lastChartTimestamp + Math.max(0, Date.now() - state.lastArrivalAt);
 }
 
 function niceRange(min, max, minSpan, fixedMin, fixedMax) {

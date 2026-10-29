@@ -257,10 +257,10 @@ window.updateGlobalHeader = window.updateGlobalHeader || function updateGlobalHe
             linkStatusEl.textContent = "DESCONECTADO";
             linkStatusEl.style.color = "var(--bad)";
         } else if (isStale) {
-            linkStatusEl.textContent = `DEGRADADO (+${(silenceMs / 1000).toFixed(1)}s)`;
+            linkStatusEl.textContent = `SIN SEÑAL (+${(silenceMs / 1000).toFixed(1)}s)`;
             linkStatusEl.style.color = "var(--bad)";
         } else if (isFrozen) {
-            linkStatusEl.textContent = `CONGELADO +${(silenceMs / 1000).toFixed(1)}s`;
+            linkStatusEl.textContent = `SILENCIO (+${(silenceMs / 1000).toFixed(1)}s)`;
             linkStatusEl.style.color = "var(--warn)";
         } else {
             linkStatusEl.textContent = "CONECTADO";

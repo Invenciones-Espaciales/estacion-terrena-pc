@@ -788,6 +788,7 @@
 
         <div class="hgroup">
             <div class="hcell"><span class="k">HORA LOCAL</span><span class="v clock num" id="localTime">00:00:00</span></div>
+            <div class="hcell"><span class="k">TIEMPO DE MISIÓN</span><span class="v clock num">T+ <span id="clock">00:00:00</span></span></div>
             <div class="hcell"><span class="k">FASE DE VUELO</span><span class="phase" id="phase">---</span></div>
             <div class="hcell"><span class="k">SEÑAL RF (RSSI)</span><span class="v num nd" id="rssi">N/D</span></div>
             <div class="hcell"><span class="k">ENLACE</span><span class="v" style="font-size:15px"><span class="dot" id="linkDot"></span><span id="linkStatus">DESCONECTADO</span></span></div>
@@ -1196,16 +1197,11 @@ function drawPacketRibbon() {
     const gap = 1;
     const blockW = Math.max(1.5, (w - (total - 1) * gap) / total);
 
-    ctx.save();
-    if (!isLive) {
-        ctx.globalAlpha = 0.22;
-    }
-
     for (let i = 0; i < total; i++) {
         const s = slots[i];
         const x = i * (blockW + gap);
         if (s === 0) {
-            ctx.fillStyle = "rgba(30, 41, 59, 0.55)";
+            ctx.fillStyle = "rgba(30, 41, 59, 0.75)";
             ctx.fillRect(x, 6, blockW, h - 12);
             continue;
         }
@@ -1216,25 +1212,38 @@ function drawPacketRibbon() {
 
         ctx.fillRect(x, 4, blockW, h - 8);
     }
-    ctx.restore();
 
-    // High-contrast banner overlay when data stops arriving
+    // Centered live floating status pill when telemetry is interrupted
     if (!isLive) {
-        ctx.fillStyle = "rgba(6, 9, 14, 0.85)";
-        ctx.fillRect(0, 0, w, h);
-
         const isBad = !state.connected || silenceSec > 2.0;
-        ctx.fillStyle = isBad ? "#ef4444" : "#f59e0b";
-        ctx.font = "900 11px 'JetBrains Mono', Consolas, monospace";
+        let bannerMsg = "SIN TELEMETRÍA";
+        if (!state.connected) {
+            bannerMsg = `ENLACE DESCONECTADO ${silenceSec < 999 ? "(" + silenceSec.toFixed(1) + "s)" : ""}`;
+        } else {
+            bannerMsg = `SILENCIO DE TELEMETRÍA (${silenceSec.toFixed(1)}s)`;
+        }
+        ctx.font = "900 10.5px 'JetBrains Mono', Consolas, monospace";
+        const textWidth = ctx.measureText(bannerMsg).width;
+        const pillW = textWidth + 18;
+        const pillH = 20;
+        const pillX = (w - pillW) / 2;
+        const pillY = (h - pillH) / 2;
+
+        ctx.fillStyle = "rgba(10, 15, 23, 0.88)";
+        ctx.strokeStyle = isBad ? "#ef4444" : "#f59e0b";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(pillX, pillY, pillW, pillH, 4);
+        } else {
+            ctx.rect(pillX, pillY, pillW, pillH);
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = isBad ? "#fca5a5" : "#fde68a";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-
-        let bannerMsg = "SIN TELEMETRÍA (INACTIVO)";
-        if (!state.connected) {
-            bannerMsg = "ENLACE DESCONECTADO";
-        } else if (silenceSec <= 2.0) {
-            bannerMsg = "SILENCIO DE TELEMETRÍA";
-        }
         ctx.fillText(bannerMsg, w / 2, h / 2);
     }
 }
@@ -1290,47 +1299,89 @@ function drawEnhancedSparkline(canvasId, data, minVal, maxVal, nominalVal, tolLo
     ctx.fillText(`${maxVal > 0 && minVal < 0 ? "+" : ""}${maxVal}${unit}`, 4, 10);
     ctx.fillText(`${minVal}${unit}`, 4, h - 3);
 
-    if (!data || data.length < 2) return;
+    if (!data || data.length === 0) return;
 
-    const lastVal = data[data.length - 1];
+    const now = Date.now();
+    const windowMs = 60000;
+    const start = now - windowMs;
+
+    // Filter points in the active 60s window
+    const points = [];
+    for (let i = 0; i < data.length; i++) {
+        const item = data[i];
+        const t = (typeof item === "object" && item !== null) ? item.t : (now - (data.length - 1 - i) * 1000);
+        const v = (typeof item === "object" && item !== null) ? item.v : item;
+        if (t >= start - 1500) {
+            points.push({ t, v });
+        }
+    }
+
+    if (points.length < 1) return;
+
+    const lastPoint = points[points.length - 1];
+    const lastVal = lastPoint.v;
     const inTol = (tolLow === null || lastVal >= tolLow) && (tolHigh === null || lastVal <= tolHigh);
-    const strokeCol = inTol ? "#10b981" : "#ef4444";
-    const fillCol = inTol ? "rgba(16, 185, 129, 0.22)" : "rgba(239, 68, 68, 0.22)";
+    const silenceSec = state.lastPacketAt ? (now - state.lastPacketAt) / 1000 : 999;
+    const isLive = state.connected && silenceSec <= 0.8;
 
-    // 4. Area fill under/to baseline
+    const strokeCol = inTol ? (isLive ? "#10b981" : "#f59e0b") : "#ef4444";
+    const fillCol = inTol ? (isLive ? "rgba(16, 185, 129, 0.22)" : "rgba(245, 158, 11, 0.15)") : "rgba(239, 68, 68, 0.22)";
+
+    const invTime = (w - 8) / windowMs;
+    const getX = t => Math.max(4, Math.min(w - 4, 4 + (t - start) * invTime));
+
     const baseY = nominalVal !== null ? valToY(nominalVal) : h - padY;
-    ctx.beginPath();
-    const len = data.length;
-    for (let i = 0; i < len; i++) {
-        const x = (i / Math.max(1, 60 - 1)) * (w - 8) + 4;
-        const y = valToY(data[i]);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+    const len = points.length;
+
+    if (len >= 2) {
+        // Area fill
+        ctx.beginPath();
+        for (let i = 0; i < len; i++) {
+            const x = getX(points[i].t);
+            const y = valToY(points[i].v);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        const lastX = getX(lastPoint.t);
+        const lastY = valToY(lastVal);
+        ctx.lineTo(lastX, baseY);
+        ctx.lineTo(getX(points[0].t), baseY);
+        ctx.closePath();
+        ctx.fillStyle = fillCol;
+        ctx.fill();
+
+        // Crisp trace line
+        ctx.beginPath();
+        for (let i = 0; i < len; i++) {
+            const x = getX(points[i].t);
+            const y = valToY(points[i].v);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = strokeCol;
+        ctx.lineWidth = 2.4;
+        ctx.stroke();
     }
-    const lastX = ((len - 1) / Math.max(1, 60 - 1)) * (w - 8) + 4;
+
+    const lastX = getX(lastPoint.t);
     const lastY = valToY(lastVal);
-    ctx.lineTo(lastX, baseY);
-    ctx.lineTo(4, baseY);
-    ctx.closePath();
-    ctx.fillStyle = fillCol;
-    ctx.fill();
 
-    // 5. Crisp trace line
-    ctx.beginPath();
-    for (let i = 0; i < len; i++) {
-        const x = (i / Math.max(1, 60 - 1)) * (w - 8) + 4;
-        const y = valToY(data[i]);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+    // If signal interrupted, draw dashed extrapolation towards current time
+    if (!isLive && lastX < w - 6) {
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(w - 4, lastY);
+        ctx.stroke();
+        ctx.setLineDash([]);
     }
-    ctx.strokeStyle = strokeCol;
-    ctx.lineWidth = 2.4;
-    ctx.stroke();
 
-    // 6. Live glowing head dot
+    // Live head dot
     ctx.beginPath();
     ctx.arc(lastX, lastY, 3.8, 0, Math.PI * 2);
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = isLive ? "#ffffff" : "#fca5a5";
     ctx.fill();
     ctx.lineWidth = 2;
     ctx.strokeStyle = strokeCol;
@@ -1528,20 +1579,21 @@ function renderDashboard() {
 
     // 3. Column 1: Packet Integrity & Stability
     $("linkStabTimer").textContent = formatTimerMinSec(state.linkStabMs);
-    $("linkStabLoss").textContent = `${state.loss5s.toFixed(1)}%`;
+    $("linkStabLoss").textContent = (state.connected && silence <= 1.0) ? `${state.loss5s.toFixed(1)}%` : "100.0%";
     const mLinkStateEl = $("mLinkState");
     if (mLinkStateEl) {
         if (!state.connected) {
-            mLinkStateEl.textContent = "Desconectado";
+            const ageStr = silence < 900 ? ` (${silence.toFixed(1)}s)` : "";
+            mLinkStateEl.textContent = `Desconectado${ageStr}`;
             mLinkStateEl.style.color = "var(--bad)";
         } else if (silence <= 0.6) {
             mLinkStateEl.textContent = "Activo";
             mLinkStateEl.style.color = "var(--ok)";
         } else if (silence <= 2.0) {
-            mLinkStateEl.textContent = "Silencio";
+            mLinkStateEl.textContent = `Silencio (${silence.toFixed(1)}s)`;
             mLinkStateEl.style.color = "var(--warn)";
         } else {
-            mLinkStateEl.textContent = "Sin señal";
+            mLinkStateEl.textContent = `Sin señal (${silence.toFixed(1)}s)`;
             mLinkStateEl.style.color = "var(--bad)";
         }
     }
@@ -1832,11 +1884,12 @@ function handleTelemetry(d, isHistory = false, frameEpochMs = null) {
     if (d.pin_frenado !== undefined && Number.isFinite(Number(d.pin_frenado))) state.pinFrenado = Number(d.pin_frenado);
     if (d.pin_principal !== undefined && Number.isFinite(Number(d.pin_principal))) state.pinPrincipal = Number(d.pin_principal);
 
+    const nowMs = tMs || Date.now();
     const rawAlt = d.altura_actual !== undefined ? d.altura_actual : d.altitude;
     if (Number.isFinite(Number(rawAlt))) {
         state.altitude = Number(rawAlt);
-        state.altHistory.push(state.altitude);
-        if (state.altHistory.length > 60) state.altHistory.shift();
+        state.altHistory.push({ t: nowMs, v: state.altitude });
+        while (state.altHistory.length && state.altHistory[0].t < nowMs - 65000) state.altHistory.shift();
     }
 
     const ax = Number(d.accel_x ?? d.ax);
@@ -1845,8 +1898,8 @@ function handleTelemetry(d, isHistory = false, frameEpochMs = null) {
     if (Number.isFinite(ax) && Number.isFinite(ay) && Number.isFinite(az)) {
         state.ax = ax; state.ay = ay; state.az = az;
         state.accMag = Math.sqrt(ax * ax + ay * ay + az * az);
-        state.accHistory.push(state.accMag);
-        if (state.accHistory.length > 60) state.accHistory.shift();
+        state.accHistory.push({ t: nowMs, v: state.accMag });
+        while (state.accHistory.length && state.accHistory[0].t < nowMs - 65000) state.accHistory.shift();
     }
 
     const lat = Number(d.latitud ?? d.latitude);
@@ -1859,8 +1912,8 @@ function handleTelemetry(d, isHistory = false, frameEpochMs = null) {
             state.gpsAnchor = { lat, lon };
         }
         state.gpsDriftM = haversineMeters(state.gpsAnchor.lat, state.gpsAnchor.lon, lat, lon);
-        state.gpsHistory.push(state.gpsDriftM);
-        if (state.gpsHistory.length > 60) state.gpsHistory.shift();
+        state.gpsHistory.push({ t: nowMs, v: state.gpsDriftM });
+        while (state.gpsHistory.length && state.gpsHistory[0].t < nowMs - 65000) state.gpsHistory.shift();
     } else {
         state.gpsFix = 0;
     }
@@ -1961,7 +2014,7 @@ function frameLoop(time) {
 
     const now = Date.now();
     const silence = state.lastPacketAt ? now - state.lastPacketAt : 999999;
-    if (silence > 300) {
+    if (silence > 250) {
         if (now - lastSilentSlotPush >= 100) {
             lastSilentSlotPush = now;
             state.packetSlots.push(0);
@@ -1991,8 +2044,15 @@ setInterval(() => {
     let rec = 0, lost = 0;
     for (const w of state.seqWindow) { rec += w.rec; lost += w.lost; }
     const tot = rec + lost;
-    state.loss5s = tot > 0 ? (lost / tot) * 100 : 0;
-}, 500);
+
+    const silence = state.lastPacketAt ? (now - state.lastPacketAt) / 1000 : 999;
+    if (!state.connected || silence > 2.0) {
+        state.loss5s = 100.0;
+        state.rxRate = 0.0;
+    } else {
+        state.loss5s = tot > 0 ? (lost / tot) * 100 : 0;
+    }
+}, 200);
 
 document.addEventListener("DOMContentLoaded", async () => {
     loadPersistedState();
