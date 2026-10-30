@@ -16,6 +16,7 @@ import sqlite3
 import struct
 import sys
 import time
+import urllib.request
 from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -25,7 +26,7 @@ try:
     import serial_asyncio
     import uvicorn
     import yaml
-    from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+    from fastapi import FastAPI, Request, Response, WebSocket, WebSocketDisconnect
     from fastapi.responses import FileResponse, JSONResponse
     from fastapi.staticfiles import StaticFiles
 except ModuleNotFoundError as exc:
@@ -83,6 +84,9 @@ APP_CONFIG_FILE = CONFIG_DIR / "app.yaml"
 FRAME_CONFIG_FILE = CONFIG_DIR / "frame.yaml"
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
+TILES_DIR = DATA_DIR / "tiles"
+TILES_DIR.mkdir(parents=True, exist_ok=True)
+OFFLINE_FALLBACK_FILE = FRONTEND_DIR / "assets" / "tile_offline.png"
 
 # ============================================================
 # LOGGING
@@ -798,6 +802,10 @@ class Database:
 
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.connection = sqlite3.connect(self.path, check_same_thread=False)
+        self.connection.execute("PRAGMA journal_mode = WAL;")
+        self.connection.execute("PRAGMA synchronous = NORMAL;")
+        self.connection.execute("PRAGMA cache_size = -64000;")
+        self.connection.execute("PRAGMA temp_store = MEMORY;")
         self.connection.execute(
             """
             CREATE TABLE IF NOT EXISTS telemetry (
@@ -1228,6 +1236,41 @@ class SerialProtocol(asyncio.Protocol):
         create_background_task(websocket_manager.broadcast({"type": "connection", "connected": False}))
 
 
+def resolve_serial_port(configured_port: str) -> str:
+    """Resolve serial port, falling back to auto-discovered candidate if configured port does not exist."""
+    path = Path(configured_port)
+    if path.exists():
+        return configured_port
+
+    try:
+        import serial.tools.list_ports
+        available = list(serial.tools.list_ports.comports())
+        if not available:
+            return configured_port
+
+        for port_info in available:
+            if port_info.device == configured_port:
+                return configured_port
+
+        candidates = [
+            p.device for p in available
+            if "ACM" in p.device or "USB" in p.device or p.device.startswith("COM")
+        ]
+        if candidates:
+            logger.warning(
+                "Configured UART port '%s' not found. Auto-selecting candidate port '%s' (available: %s)",
+                configured_port,
+                candidates[0],
+                [p.device for p in available],
+            )
+            return candidates[0]
+
+        return available[0].device
+    except Exception as exc:
+        logger.debug("Serial auto-discovery error: %s", exc)
+        return configured_port
+
+
 async def serial_loop():
     while True:
         if app_config is None:
@@ -1235,16 +1278,22 @@ async def serial_loop():
             continue
 
         transport = None
+        target_port = resolve_serial_port(app_config.serial.port)
         try:
-            logger.info("Connecting UART to %s @ %d baud", app_config.serial.port, app_config.serial.baudrate)
+            logger.info(
+                "Connecting UART to %s @ %d baud (configured: %s)",
+                target_port,
+                app_config.serial.baudrate,
+                app_config.serial.port,
+            )
             loop = asyncio.get_running_loop()
             transport, protocol = await serial_asyncio.create_serial_connection(
                 loop,
                 lambda: SerialProtocol(loop),
-                app_config.serial.port,
+                target_port,
                 baudrate=app_config.serial.baudrate,
             )
-            logger.info("UART port opened successfully")
+            logger.info("UART port '%s' opened successfully", target_port)
             await protocol.disconnected.wait()
         except asyncio.CancelledError:
             logger.info("Serial loop cancelled")
@@ -1253,7 +1302,7 @@ async def serial_loop():
             raise
         except Exception:
             runtime.connected = False
-            logger.exception("UART communication error")
+            logger.exception("UART communication error on port '%s'", target_port)
         finally:
             runtime.connected = False
             if transport is not None:
@@ -1313,6 +1362,99 @@ async def recovery():
         logger.error("Recovery view not found: %s, falling back to index.html", recovery_file)
         return FileResponse(FRONTEND_DIR / "index.html")
     return FileResponse(recovery_file)
+
+
+# ============================================================
+# OFFLINE MAP TILE ENGINE
+# ============================================================
+
+@app.get("/tiles/{z}/{x}/{y}.png")
+async def get_tile(z: int, x: int, y: int):
+    """Serve offline map tiles from local storage cache, fetching from OSM if uncached and online."""
+    if z < 0 or z > 19:
+        return Response(status_code=400, content="Invalid zoom level")
+    max_coord = 1 << z
+    if x < 0 or x >= max_coord or y < 0 or y >= max_coord:
+        return Response(status_code=400, content="Tile coordinates out of bounds")
+
+    tile_path = TILES_DIR / str(z) / str(x) / f"{y}.png"
+    if tile_path.exists() and tile_path.stat().st_size > 0:
+        return FileResponse(
+            tile_path,
+            media_type="image/png",
+            headers={"Cache-Control": "public, max-age=86400, immutable"},
+        )
+
+    # Attempt to fetch from OSM in a background thread if online
+    def fetch_osm_tile() -> Optional[bytes]:
+        url = f"https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "RocketTelemetryGroundStation/1.0 (offline-map-cache; github.com/invenciones-espaciales)",
+                "Accept": "image/png,image/*;q=0.8,*/*;q=0.5",
+            },
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                if resp.status == 200:
+                    return resp.read()
+        except Exception:
+            return None
+        return None
+
+    tile_data = await asyncio.to_thread(fetch_osm_tile)
+    if tile_data and len(tile_data) > 0:
+        try:
+            tile_path.parent.mkdir(parents=True, exist_ok=True)
+            temp_path = tile_path.with_suffix(".tmp")
+            temp_path.write_bytes(tile_data)
+            temp_path.replace(tile_path)
+            return FileResponse(
+                tile_path,
+                media_type="image/png",
+                headers={"Cache-Control": "public, max-age=86400, immutable"},
+            )
+        except Exception as exc:
+            logger.warning("Failed to save downloaded tile %d/%d/%d: %s", z, x, y, exc)
+            return Response(content=tile_data, media_type="image/png")
+
+    if OFFLINE_FALLBACK_FILE.exists():
+        return FileResponse(
+            OFFLINE_FALLBACK_FILE,
+            media_type="image/png",
+            headers={"Cache-Control": "public, max-age=3600"},
+        )
+    return Response(status_code=404, content="Tile not found")
+
+
+@app.get("/api/tiles/stats")
+async def get_tile_stats():
+    """Return local offline map tile cache statistics."""
+    def compute_stats():
+        if not TILES_DIR.exists():
+            return {"tile_count": 0, "total_size_mb": 0.0, "zooms": []}
+        count = 0
+        total_bytes = 0
+        zooms = set()
+        for p in TILES_DIR.glob("*/*/*.png"):
+            try:
+                stat = p.stat()
+                total_bytes += stat.st_size
+                count += 1
+                z_name = p.parent.parent.name
+                if z_name.isdigit():
+                    zooms.add(int(z_name))
+            except OSError:
+                pass
+        return {
+            "tile_count": count,
+            "total_size_mb": round(total_bytes / (1024 * 1024), 2),
+            "zooms": sorted(list(zooms)),
+            "cache_dir": str(TILES_DIR),
+        }
+    return await asyncio.to_thread(compute_stats)
+
 
 
 @app.get("/api/history")
