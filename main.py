@@ -1394,8 +1394,11 @@ async def get_tile(z: int, x: int, y: int):
         candidate_urls = []
         if z <= 14:
             candidate_urls.append(f"https://tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png")
-        candidate_urls.append(f"https://tile.opentopomap.org/{z}/{x}/{y}.png")
+        # Esri has worldwide high-resolution street maps from zoom 0 to 19
         candidate_urls.append(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}")
+        # OpenTopoMap only supports zoom levels <= 17
+        if z <= 17:
+            candidate_urls.append(f"https://tile.opentopomap.org/{z}/{x}/{y}.png")
 
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) RocketTelemetryGroundStation/1.0",
@@ -1409,9 +1412,10 @@ async def get_tile(z: int, x: int, y: int):
                         data = resp.read()
                         if (
                             len(data) < 500
-                            or len(data) in (6987, 6933, 2049)
+                            or len(data) in (6987, 6933, 2049, 4343)
                             or b"Blocked" in data
                             or b"API KEY REQUIRED" in data
+                            or b"max zoom" in data
                         ):
                             continue
                         return data

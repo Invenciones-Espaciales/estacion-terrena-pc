@@ -91,8 +91,9 @@ def predownload_tiles(
         candidate_urls = []
         if z <= 14:
             candidate_urls.append(f"https://tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png")
-        candidate_urls.append(f"https://tile.opentopomap.org/{z}/{x}/{y}.png")
         candidate_urls.append(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}")
+        if z <= 17:
+            candidate_urls.append(f"https://tile.opentopomap.org/{z}/{x}/{y}.png")
 
         success = False
         for url in candidate_urls:
@@ -106,11 +107,12 @@ def predownload_tiles(
                             data = resp.read()
                             if (
                                 len(data) < 500
-                                or len(data) in (6987, 6933, 2049)
+                                or len(data) in (6987, 6933, 2049, 4343)
                                 or b"Blocked" in data
                                 or b"API KEY REQUIRED" in data
+                                or b"max zoom" in data
                             ):
-                                raise ValueError(f"Provider {url} returned blocked image ({len(data)} bytes)")
+                                raise ValueError(f"Provider {url} returned blocked/stub image ({len(data)} bytes)")
                             tile_file.parent.mkdir(parents=True, exist_ok=True)
                             tmp_file = tile_file.with_suffix(".tmp")
                             tmp_file.write_bytes(data)
