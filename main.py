@@ -1391,14 +1391,15 @@ async def get_tile(z: int, x: int, y: int):
 
     # Attempt to fetch from OSM in a background thread if online
     def fetch_osm_tile() -> Optional[bytes]:
-        candidate_urls = []
-        if z <= 14:
-            candidate_urls.append(f"https://tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png")
-        # Esri has worldwide high-resolution street maps from zoom 0 to 19
-        candidate_urls.append(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}")
-        # OpenTopoMap only supports zoom levels <= 17
+        candidate_urls = [
+            # Esri has worldwide high-resolution street maps from zoom 0 to 19 (fast global Akamai CDN)
+            f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+        ]
+        # OpenTopoMap supports zoom levels <= 17
         if z <= 17:
             candidate_urls.append(f"https://tile.opentopomap.org/{z}/{x}/{y}.png")
+        # Esri satellite imagery fallback
+        candidate_urls.append(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}")
 
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) RocketTelemetryGroundStation/1.0",
@@ -1443,7 +1444,7 @@ async def get_tile(z: int, x: int, y: int):
         return FileResponse(
             OFFLINE_FALLBACK_FILE,
             media_type="image/png",
-            headers={"Cache-Control": "public, max-age=3600"},
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
         )
     return Response(status_code=404, content="Tile not found")
 

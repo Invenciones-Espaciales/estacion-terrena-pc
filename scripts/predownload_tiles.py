@@ -88,12 +88,12 @@ def predownload_tiles(
             total_bytes += tile_file.stat().st_size
             continue
 
-        candidate_urls = []
-        if z <= 14:
-            candidate_urls.append(f"https://tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png")
-        candidate_urls.append(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}")
+        candidate_urls = [
+            f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+        ]
         if z <= 17:
             candidate_urls.append(f"https://tile.opentopomap.org/{z}/{x}/{y}.png")
+        candidate_urls.append(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}")
 
         success = False
         for url in candidate_urls:

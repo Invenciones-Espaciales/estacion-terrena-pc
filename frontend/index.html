@@ -1234,13 +1234,14 @@ function drawTape(now) {
 
 function initMap() {
     if (!window.L) { console.error("No se pudo cargar Leaflet; mapa no disponible"); return; }
-    state.map = L.map("gpsMap", { zoomControl: true }).setView([-34.6037, -58.3816], 13);
+    state.map = L.map("gpsMap", { zoomControl: true, minZoom: 10, maxZoom: 18 }).setView([-34.6037, -58.3816], 13);
     const isStaticDemo = window.location.hostname.includes("github.io") || window.location.protocol === "file:";
     const tileUrl = isStaticDemo
         ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
         : "/tiles/{z}/{x}/{y}.png";
     L.tileLayer(tileUrl, {
-        maxZoom: 19,
+        minZoom: 10,
+        maxZoom: 18,
         maxNativeZoom: 18,
         attribution: isStaticDemo
             ? '&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri, USGS'

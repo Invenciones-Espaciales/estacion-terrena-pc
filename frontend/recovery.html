@@ -800,14 +800,15 @@ function bearingToCardinal(deg) {
 /* MAPA LEAFLET */
 function initRecoveryMap() {
     if (!window.L) return;
-    recoveryState.map = L.map("recoveryMap", { zoomControl: true }).setView([-34.6037, -58.3816], 14);
+    recoveryState.map = L.map("recoveryMap", { zoomControl: true, minZoom: 10, maxZoom: 18 }).setView([-34.6037, -58.3816], 14);
 
     const isStaticDemo = window.location.hostname.includes("github.io") || window.location.protocol === "file:";
     const tileUrl = isStaticDemo
         ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
         : "/tiles/{z}/{x}/{y}.png";
     L.tileLayer(tileUrl, {
-        maxZoom: 19,
+        minZoom: 10,
+        maxZoom: 18,
         maxNativeZoom: 18,
         attribution: isStaticDemo
             ? '&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri, USGS'
@@ -1109,7 +1110,7 @@ async function loadHistory() {
                 if (recoveryState.baseLat !== null) pts.push([recoveryState.baseLat, recoveryState.baseLon]);
                 if (recoveryState.lat !== null) pts.push([recoveryState.lat, recoveryState.lon]);
                 if (pts.length > 1) {
-                    recoveryState.map.fitBounds(L.latLngBounds(pts).pad(0.25));
+                    recoveryState.map.fitBounds(L.latLngBounds(pts).pad(0.25), { maxZoom: 17 });
                 }
             }
             renderRecoveryUI();
@@ -1186,7 +1187,7 @@ $("btnFitAll").onclick = () => {
     const pts = [];
     if (recoveryState.baseLat !== null) pts.push([recoveryState.baseLat, recoveryState.baseLon]);
     if (recoveryState.lat !== null) pts.push([recoveryState.lat, recoveryState.lon]);
-    if (pts.length) recoveryState.map.fitBounds(L.latLngBounds(pts).pad(0.2));
+    if (pts.length) recoveryState.map.fitBounds(L.latLngBounds(pts).pad(0.2), { maxZoom: 17 });
 };
 
 $("btnMyPos").onclick = () => {

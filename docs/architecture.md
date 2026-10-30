@@ -1,6 +1,7 @@
 # System Architecture & Component Documentation
 
-> **Language / Idioma:** [ 🇬🇧 English ](architecture.md) | [ 🇪🇸 Español ](es/architecture.md)
+> **Language / Idioma:** [ 🇬🇧 English ](architecture.md) | [ 🇪🇸 Español ](es/architecture.md)  
+> **Visual Reference:** [ 📊 Comprehensive Architectural Diagrams & Deep-Dive Reference ](architecture-diagrams.md)
 
 This document describes the end-to-end system architecture, asynchronous concurrency model, data flow, and frontend rendering pipeline of the **Rocket Telemetry Ground Station** (`estacion-terrena-pc`).
 
