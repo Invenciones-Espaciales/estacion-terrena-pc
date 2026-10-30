@@ -70,17 +70,28 @@ class TestOfflineTilesAndResilience(unittest.TestCase):
 
     def test_serial_port_auto_discovery(self):
         """Should discover alternative USB/ACM serial ports if configured port is missing."""
-        existing_port = "/dev/null"
-        self.assertEqual(main.resolve_serial_port(existing_port), existing_port)
-
         mock_port_1 = MagicMock()
         mock_port_1.device = "/dev/ttyACM1"
         mock_port_2 = MagicMock()
         mock_port_2.device = "/dev/ttyUSB0"
 
+        # Case 1: Configured port is found in available ports -> retained as-is
         with patch("serial.tools.list_ports.comports", return_value=[mock_port_1, mock_port_2]):
-            selected = main.resolve_serial_port("/dev/ttyACM0")
+            selected = main.resolve_serial_port("/dev/ttyACM1")
             self.assertEqual(selected, "/dev/ttyACM1")
+
+        # Case 2: Configured port is missing -> auto-discovers candidate port
+        with patch("serial.tools.list_ports.comports", return_value=[mock_port_1, mock_port_2]):
+            with patch.object(Path, "exists", return_value=False):
+                selected = main.resolve_serial_port("/dev/ttyACM0")
+                self.assertEqual(selected, "/dev/ttyACM1")
+
+        # Case 3: Windows COM port format matching case-insensitively
+        mock_com = MagicMock()
+        mock_com.device = "COM3"
+        with patch("serial.tools.list_ports.comports", return_value=[mock_com]):
+            selected = main.resolve_serial_port("com3")
+            self.assertEqual(selected, "com3")
 
 
 if __name__ == "__main__":

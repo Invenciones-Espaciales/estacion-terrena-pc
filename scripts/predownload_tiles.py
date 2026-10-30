@@ -88,30 +88,43 @@ def predownload_tiles(
             total_bytes += tile_file.stat().st_size
             continue
 
-        url = f"https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        req = urllib.request.Request(url, headers=headers)
-        success = False
+        candidate_urls = []
+        if z <= 14:
+            candidate_urls.append(f"https://tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png")
+        candidate_urls.append(f"https://tile.opentopomap.org/{z}/{x}/{y}.png")
+        candidate_urls.append(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}")
 
-        for attempt in range(1, 4):
-            try:
-                with urllib.request.urlopen(req, timeout=5.0) as resp:
-                    if resp.status == 200:
-                        data = resp.read()
-                        tile_file.parent.mkdir(parents=True, exist_ok=True)
-                        tmp_file = tile_file.with_suffix(".tmp")
-                        tmp_file.write_bytes(data)
-                        tmp_file.replace(tile_file)
-                        downloaded += 1
-                        total_bytes += len(data)
-                        success = True
-                        break
-            except Exception as exc:
-                if attempt == 3:
-                    print(f"  [WARN] Failed tile {z}/{x}/{y}: {exc}", file=sys.stderr)
-                time.sleep(0.5 * attempt)
+        success = False
+        for url in candidate_urls:
+            if success:
+                break
+            for attempt in range(1, 3):
+                try:
+                    req = urllib.request.Request(url, headers=headers)
+                    with urllib.request.urlopen(req, timeout=4.0) as resp:
+                        if resp.status == 200:
+                            data = resp.read()
+                            if (
+                                len(data) < 500
+                                or len(data) in (6987, 6933, 2049)
+                                or b"Blocked" in data
+                                or b"API KEY REQUIRED" in data
+                            ):
+                                raise ValueError(f"Provider {url} returned blocked image ({len(data)} bytes)")
+                            tile_file.parent.mkdir(parents=True, exist_ok=True)
+                            tmp_file = tile_file.with_suffix(".tmp")
+                            tmp_file.write_bytes(data)
+                            tmp_file.replace(tile_file)
+                            downloaded += 1
+                            total_bytes += len(data)
+                            success = True
+                            break
+                except Exception:
+                    time.sleep(0.3 * attempt)
 
         if not success:
             failed += 1
+            print(f"  [WARN] Failed tile {z}/{x}/{y} across all providers", file=sys.stderr)
 
         if delay > 0:
             time.sleep(delay)

@@ -1238,9 +1238,12 @@ class SerialProtocol(asyncio.Protocol):
 
 def resolve_serial_port(configured_port: str) -> str:
     """Resolve serial port, falling back to auto-discovered candidate if configured port does not exist."""
-    path = Path(configured_port)
-    if path.exists():
-        return configured_port
+    try:
+        path = Path(configured_port)
+        if path.exists():
+            return configured_port
+    except Exception:
+        pass
 
     try:
         import serial.tools.list_ports
@@ -1248,13 +1251,14 @@ def resolve_serial_port(configured_port: str) -> str:
         if not available:
             return configured_port
 
+        norm_cfg = str(configured_port).strip().upper()
         for port_info in available:
-            if port_info.device == configured_port:
+            if str(port_info.device).strip().upper() == norm_cfg:
                 return configured_port
 
         candidates = [
             p.device for p in available
-            if "ACM" in p.device or "USB" in p.device or p.device.startswith("COM")
+            if "ACM" in p.device or "USB" in p.device or p.device.upper().startswith("COM")
         ]
         if candidates:
             logger.warning(
@@ -1387,20 +1391,32 @@ async def get_tile(z: int, x: int, y: int):
 
     # Attempt to fetch from OSM in a background thread if online
     def fetch_osm_tile() -> Optional[bytes]:
-        url = f"https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        req = urllib.request.Request(
-            url,
-            headers={
-                "User-Agent": "RocketTelemetryGroundStation/1.0 (offline-map-cache; github.com/invenciones-espaciales)",
-                "Accept": "image/png,image/*;q=0.8,*/*;q=0.5",
-            },
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=3.0) as resp:
-                if resp.status == 200:
-                    return resp.read()
-        except Exception:
-            return None
+        candidate_urls = []
+        if z <= 14:
+            candidate_urls.append(f"https://tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png")
+        candidate_urls.append(f"https://tile.opentopomap.org/{z}/{x}/{y}.png")
+        candidate_urls.append(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}")
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) RocketTelemetryGroundStation/1.0",
+            "Accept": "image/png,image/jpeg,image/*;q=0.8,*/*;q=0.5",
+        }
+        for url in candidate_urls:
+            try:
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=3.5) as resp:
+                    if resp.status == 200:
+                        data = resp.read()
+                        if (
+                            len(data) < 500
+                            or len(data) in (6987, 6933, 2049)
+                            or b"Blocked" in data
+                            or b"API KEY REQUIRED" in data
+                        ):
+                            continue
+                        return data
+            except Exception:
+                continue
         return None
 
     tile_data = await asyncio.to_thread(fetch_osm_tile)

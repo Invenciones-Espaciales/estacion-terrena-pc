@@ -803,10 +803,14 @@ function initRecoveryMap() {
     recoveryState.map = L.map("recoveryMap", { zoomControl: true }).setView([-34.6037, -58.3816], 14);
 
     const isStaticDemo = window.location.hostname.includes("github.io") || window.location.protocol === "file:";
-    const tileUrl = isStaticDemo ? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" : "/tiles/{z}/{x}/{y}.png";
+    const tileUrl = isStaticDemo
+        ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+        : "/tiles/{z}/{x}/{y}.png";
     L.tileLayer(tileUrl, {
         maxZoom: 19,
-        attribution: '&copy; OpenStreetMap (Offline Server Cache)'
+        attribution: isStaticDemo
+            ? '&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri, USGS'
+            : '&copy; OpenStreetMap (Offline Server Cache)'
     }).addTo(recoveryState.map);
 
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
