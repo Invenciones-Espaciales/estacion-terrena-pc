@@ -81,56 +81,185 @@ html, body {
 
 canvas { display: block; }
 
-/* ===== ALTITUD ===== */
-
-.alt-body { flex: 1 1 0; min-height: 0; display: flex; gap: 10px; }
-.tape { width: 96px; flex: none; border: 2px solid var(--border); position: relative; }
-.tape canvas { width: 100%; height: 100%; }
-.alt-side { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 4px; }
+/* ===== ALTITUD & DINÁMICA DE VUELO ===== */
+.alt-hero-box {
+    background: var(--soft);
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+}
+.alt-hero-lbl {
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--gray);
+    letter-spacing: .08em;
+    margin-bottom: 2px;
+}
+.alt-hero-val {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
 .big { font-size: 46px; font-weight: 950; line-height: 1; }
-.unit { font-size: 16px; font-weight: 800; color: var(--gray); margin-left: 4px; }
-.lbl { font-size: 11px; font-weight: 900; color: var(--gray); letter-spacing: .06em; }
+.unit { font-size: 18px; font-weight: 900; color: var(--gray); }
 
-.basecard { flex: none; }
-.basecard .big { font-size: 36px; }
-.axis-row { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 0; border-bottom: 1px solid var(--soft-border); }
-.axis-row:last-child { border-bottom: none; }
-.axis-row .a { font-size: 16px; font-weight: 900; color: var(--gray); }
-.axis-row .n { font-size: 24px; font-weight: 900; }
+.flight-metrics-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.flight-cell {
+    background: var(--soft);
+    border: 1.5px solid var(--soft-border);
+    border-radius: 4px;
+    padding: 7px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+.flight-cell .lbl {
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--gray);
+    letter-spacing: .05em;
+}
+.flight-cell .val {
+    font-size: 18px;
+    font-weight: 950;
+    color: var(--ink);
+}
+
+.btn-diag-toggle {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    color: var(--ink);
+    padding: 8px 10px;
+    font-size: 11.5px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+    margin-top: 8px;
+    width: 100%;
+}
+.btn-diag-toggle:hover {
+    background: var(--soft);
+    border-color: var(--accent);
+}
 
 /* ===== GRÁFICOS ===== */
-
 .chart-card { flex: 1 1 0; }
 .chart-box { position: relative; flex: 1; min-height: 0; }
 .chart-box canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.legend { display: flex; gap: 12px; font-size: 12px; font-weight: 900; }
-.legend i { display: inline-block; width: 14px; height: 4px; margin-right: 4px; vertical-align: middle; }
 
-/* ===== MAPA ===== */
-
+/* ===== MAPA & NAVEGACIÓN ===== */
 #gpsMap { flex: 1; min-height: 80px; border: 2px solid var(--border); overflow: hidden; }
-.coords { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
-.coords .k { font-size: 11px; font-weight: 900; color: var(--gray); letter-spacing: .05em; }
-.coords .v { font-size: 19px; font-weight: 950; }
+.guidance-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--soft);
+    border: 1.5px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 4px;
+    margin-top: 6px;
+}
+.guidance-banner .lbl {
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--gray);
+    letter-spacing: 0.04em;
+}
+.guidance-banner .val {
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--accent);
+}
+.coords-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--soft);
+    border: 1px solid var(--soft-border);
+    padding: 5px 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+}
+.coord-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+.coord-item .lbl {
+    font-size: 10px;
+    font-weight: 900;
+    color: var(--gray);
+}
+.coord-item .val {
+    font-size: 13.5px;
+    font-weight: 950;
+}
+.sat-badge .val { color: var(--ok); }
+.hint.fix-ok { color: var(--ok); font-weight: 950; }
+.hint.fix-warn { color: var(--warn); font-weight: 950; }
 
-/* ===== INFERIOR COMPACTO (2 PANELES) ===== */
-
+/* ===== INFERIOR COMPACTO (PIROTECNIA / HITOS / ALERTAS) ===== */
 .bottom {
     min-height: 0;
     display: grid;
-    grid-template-columns: 0.8fr 1fr 1fr;
+    grid-template-columns: 210px 1.4fr 1.6fr;
     gap: 8px;
 }
+.pyro-lamps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    flex: 1;
+}
+.pyro-lamp {
+    background: var(--soft);
+    border: 1.5px solid var(--soft-border);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 4px;
+    text-align: center;
+}
+.pyro-lamp .name {
+    font-size: 11px;
+    font-weight: 950;
+    letter-spacing: 0.05em;
+    color: var(--gray);
+}
+.pyro-lamp .state {
+    font-size: 12px;
+    font-weight: 950;
+    margin-top: 2px;
+}
+.pyro-lamp.state-idle {
+    border-color: var(--soft-border);
+    opacity: 0.85;
+}
+.pyro-lamp.state-idle .state { color: var(--gray); }
+.pyro-lamp.state-active {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: #10b981;
+}
+.pyro-lamp.state-active .name { color: #10b981; }
+.pyro-lamp.state-active .state { color: #10b981; font-weight: 950; }
 
 .scroll { flex: 1; min-height: 0; overflow-y: auto; font-size: 13.5px; }
-
-table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
-table.t th { text-align: left; font-size: 11px; letter-spacing: .06em; color: var(--gray); position: sticky; top: 0; background: var(--card); border-bottom: 2px solid var(--border); padding: 2px 4px; }
-table.t td { padding: 3px 4px; border-bottom: 1px solid var(--soft-border); white-space: nowrap; }
-
 .empty { color: var(--muted); font-style: italic; padding: 4px; font-size: 13px; }
-.ev-time { font-weight: 950; width: 105px; flex-shrink: 0; display: inline-block; color: var(--accent); }
+.ev-time { font-weight: 950; width: 95px; flex-shrink: 0; display: inline-block; color: var(--accent); }
 .ev-row { padding: 4px 0; border-bottom: 1px solid var(--soft-border); display: flex; align-items: baseline; gap: 8px; font-weight: 700; }
+.ev-row:last-child { border-bottom: none; }
 
 .al-row { padding: 4px 6px; border-bottom: 1px solid var(--soft-border); display: flex; align-items: center; justify-content: space-between; font-size: 13.5px; }
 .al-badge { font-weight: 950; font-size: 11px; padding: 2px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -140,6 +269,99 @@ table.t td { padding: 3px 4px; border-bottom: 1px solid var(--soft-border); whit
 .al-badge.ok { background: var(--ok); color: #fff; }
 .al-desc { font-weight: 800; flex: 1; margin: 0 10px; }
 .al-val { font-weight: 950; font-family: monospace; font-size: 14.5px; }
+.al-nominal-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 900;
+    color: var(--ok);
+    padding: 4px 0;
+}
+
+/* ===== MODAL / OVERLAY DE DIAGNÓSTICOS ===== */
+.diag-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(3px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.diag-overlay.open { display: flex; }
+.diag-modal {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+}
+.diag-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: var(--soft);
+    border-bottom: 2px solid var(--border);
+}
+.diag-header h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 950;
+    letter-spacing: 0.05em;
+}
+.btn-diag-close {
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    font-weight: 900;
+    cursor: pointer;
+    color: var(--ink);
+    padding: 0 6px;
+    line-height: 1;
+}
+.diag-body {
+    padding: 12px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+}
+.diag-card {
+    background: var(--bg);
+    border: 1.5px solid var(--soft-border);
+    border-radius: 4px;
+    padding: 8px 10px;
+}
+.diag-card h3 {
+    margin: 0 0 6px 0;
+    font-size: 10.5px;
+    font-weight: 900;
+    color: var(--gray);
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--soft-border);
+    padding-bottom: 4px;
+}
+.diag-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12.5px;
+    padding: 2.5px 0;
+    border-bottom: 1px solid var(--soft-border);
+}
+.diag-row:last-child { border-bottom: none; }
+.diag-row .k { font-weight: 700; color: var(--gray); }
+.diag-row .v { font-weight: 950; font-family: monospace; font-size: 13.5px; }
+.diag-full { grid-column: 1 / -1; }
 
 /* ============================================================
    RESPONSIVE DESIGN: MOBILE VIEWPORTS (SMARTPHONES)
@@ -195,13 +417,22 @@ table.t td { padding: 3px 4px; border-bottom: 1px solid var(--soft-border); whit
         flex: none !important;
     }
 
-    .alt-body {
-        min-height: 180px !important;
-        height: 180px !important;
+    .alt-hero-box {
+        padding: 8px 12px !important;
     }
 
-    .tape {
-        width: 80px !important;
+    .alt-hero-box .num.big {
+        font-size: 40px !important;
+    }
+
+    .flight-metrics-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+    }
+
+    .flight-cell-wide {
+        grid-column: 1 / -1 !important;
     }
 
     .chart-card {
@@ -255,21 +486,9 @@ table.t td { padding: 3px 4px; border-bottom: 1px solid var(--soft-border); whit
         column-gap: 8px !important;
     }
 
-    .legend {
-        flex-wrap: wrap !important;
-        gap: 6px !important;
-        font-size: 10.5px !important;
-    }
-
-    .scale-mode-pill {
-        margin-left: 0 !important;
-        font-size: 9.5px !important;
-        padding: 2px 4px !important;
-    }
-
-    .btn-scale-opt {
-        font-size: 9px !important;
-        padding: 1px 4px !important;
+    .diag-modal {
+        max-width: 95vw !important;
+        max-height: 90vh !important;
     }
 }
 </style>
@@ -296,7 +515,6 @@ table.t td { padding: 3px 4px; border-bottom: 1px solid var(--soft-border); whit
         </div>
 
         <div class="hgroup">
-            <div class="hcell"><span class="k">HORA LOCAL</span><span class="v clock num" id="localTime">00:00:00</span></div>
             <div class="hcell"><span class="k">TIEMPO DE MISIÓN</span><span class="v clock num">T+ <span id="clock">00:00:00</span></span></div>
             <div class="hcell"><span class="k">FASE DE VUELO</span><span class="phase" id="phase">---</span></div>
             <div class="hcell"><span class="k">SEÑAL RF (RSSI)</span><span class="v num nd" id="rssi">N/D</span></div>
@@ -308,152 +526,61 @@ table.t td { padding: 3px 4px; border-bottom: 1px solid var(--soft-border); whit
 
         <!-- ==================== ZONA 2: COLUMNA IZQUIERDA (26% × 81%) ==================== -->
         <section class="panel">
+            <div class="card grow" style="display:flex; flex-direction:column; justify-content:space-between;">
+                <div>
+                    <div class="card-title">
+                        <span>DINÁMICA DE VUELO</span>
+                        <span class="card-frozen-badge" id="badgeFrozenAlt">CONGELADO</span>
+                    </div>
 
-            <!-- 1. ALTITUD Y VELOCIDAD -->
-            <div class="card" style="flex: 1.6 1 0;">
-                <div class="card-title">
-                    <span>ALTITUD Y VELOCIDAD</span>
-                    <span class="card-frozen-badge" id="badgeFrozenAlt">CONGELADO</span>
-                </div>
-                <div class="alt-body">
-                    <div class="tape"><canvas id="tape"></canvas></div>
-                    <div class="alt-side">
-                        <div>
-                            <div class="lbl">ACTUAL (BARO)</div>
-                            <div><span class="big num" id="altitude">---</span><span class="unit">m</span></div>
-                            <div style="font-size:13px; font-weight:800; color:var(--gray); margin-top:3px;">
-                                PRESIÓN: <span class="num" style="color:var(--ink); font-weight:950;" id="pressure">--- hPa</span>
-                            </div>
+                    <!-- Altitud Hero Box -->
+                    <div class="alt-hero-box">
+                        <div class="alt-hero-lbl">ALTITUD ACTUAL</div>
+                        <div class="alt-hero-val">
+                            <span class="num big" id="altitude">---</span>
+                            <span class="unit">m</span>
                         </div>
-                        <div class="row"><span class="k">APOGEO (MÁX)</span><span class="v num" id="altitudeMax">---</span></div>
-                        <div class="row"><span class="k">VEL. VERTICAL (Vz)</span><span class="v num" id="altitudeVz">---</span></div>
+                    </div>
 
-                        <!-- GPS altitude readout -->
-                        <div class="divergence-wrap" id="gpsAltWrap" title="Altitud GPS" style="padding:6px 10px;">
-                            <span class="divergence-title">GPS ALTITUD</span>
-                            <span class="divergence-delta num" id="gpsAltCard">--- m</span>
+                    <!-- Métricas Primarias de Vuelo -->
+                    <div class="flight-metrics-grid">
+                        <div class="flight-cell">
+                            <span class="lbl">VEL. VERTICAL (Vz)</span>
+                            <span class="val num" id="altitudeVz">--- m/s</span>
+                        </div>
+                        <div class="flight-cell">
+                            <span class="lbl">APOGEO (MÁX)</span>
+                            <span class="val num" id="altitudeMax">--- m</span>
+                        </div>
+                        <div class="flight-cell flight-cell-wide">
+                            <span class="lbl">CARGA G (AXIAL)</span>
+                            <span class="val num" id="gmeterVal">+0.0g</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Botón Overlay Diagnósticos y Sensores -->
+                <button type="button" class="btn-diag-toggle" id="btnOpenDiag" title="Ver telemetría detallada, aceleración triaxial, giróscopo y enlaces">
+                    🔧 SENSORES &amp; DIAGNÓSTICOS
+                </button>
             </div>
-
-            <!-- 2. DINÁMICA INERCIAL (G-METER AXIAL & GIROSCOPIO BIPOLAR) -->
-            <div class="card" style="flex: 0.8 1 0; padding: 6px 8px;">
-                <div class="card-title" style="margin-bottom:4px;">
-                    <span>DINÁMICA INERCIAL (IMU)</span>
-                    <span class="card-frozen-badge" id="badgeFrozenImu">CONGELADO</span>
-                </div>
-
-                <div style="display:flex; gap:10px; flex:1; min-height:0; align-items:stretch;">
-                    <!-- G-METER AXIAL (accel_x) con marcas Dual Peak (-2g a +12g) -->
-                    <div style="display:flex; flex-direction:column; align-items:center; width:42px; flex-shrink:0;">
-                        <div style="font-size:10px; font-weight:900; color:var(--gray); margin-bottom:3px;">G-LOAD</div>
-                        <div class="gmeter-track" style="flex:1; width:26px; position:relative;" id="gmeterTrack">
-                            <div class="gmeter-zero" id="gmeterZero" style="bottom: 14.3%;"></div>
-                            <div class="gmeter-bar" id="gmeterBar" style="height: 14.3%;"></div>
-                            <div class="gmeter-peak-boost" id="gmeterPeakBoost" style="bottom: 14.3%;" title="Pico Boost"></div>
-                            <div class="gmeter-peak-shock" id="gmeterPeakShock" style="bottom: 14.3%;" title="Pico Shock"></div>
-                        </div>
-                        <div style="font-size:12.5px; font-weight:950; font-family:monospace; margin-top:3px;" id="gmeterVal">+0.0g</div>
-                    </div>
-
-                    <!-- TABLA AXES + BARRAS BIPOLARES GYRO -->
-                    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-between; min-width:0;">
-
-                        <!-- Micro-tabla Accel XYZ con signo explícito -->
-                        <div>
-                            <div style="font-size:10.5px; font-weight:900; color:var(--gray); letter-spacing:.05em; margin-bottom:4px;">ACELERACIÓN LINEAL (g)</div>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; text-align:center;">
-                                <div class="num" style="background:var(--soft); border:1.5px solid var(--soft-border); padding:4px 2px; border-radius:3px;">
-                                    <div style="font-size:9.5px; font-weight:900; color:var(--gray)">TRANS X</div>
-                                    <div style="font-size:15.5px; font-weight:950; margin-top:1px;" id="ax">+00.00</div>
-                                </div>
-                                <div class="num" style="background:var(--soft); border:1.5px solid var(--soft-border); padding:4px 2px; border-radius:3px;">
-                                    <div style="font-size:9.5px; font-weight:900; color:var(--gray)">AXIAL Y</div>
-                                    <div style="font-size:15.5px; font-weight:950; margin-top:1px;" id="ay">+00.00</div>
-                                </div>
-                                <div class="num" style="background:var(--soft); border:1.5px solid var(--soft-border); padding:4px 2px; border-radius:3px;">
-                                    <div style="font-size:9.5px; font-weight:900; color:var(--gray)">TRANS Z</div>
-                                    <div style="font-size:15.5px; font-weight:950; margin-top:1px;" id="az">+00.00</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Barras Bipolares Gyroscope XYZ (Centro 0, ±360°/s) -->
-                        <div style="margin-top:4px;">
-                            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px;">
-                                <span style="font-size:10.5px; font-weight:900; color:var(--gray); letter-spacing:.05em;">GIROSCOPIO (°/s)</span>
-                                <span style="font-size:10px; font-weight:800; color:var(--gray)">±360°/s</span>
-                            </div>
-
-                            <!-- Roll / Spin (X) -->
-                            <div class="gyro-bipolar-row">
-                                <span class="gyro-axis-lbl">X</span>
-                                <div class="gyro-track">
-                                    <div class="gyro-center-line"></div>
-                                    <div class="gyro-fill" id="gyroFillX" style="left:50%; width:0%;"></div>
-                                </div>
-                                <span class="gyro-val-text num" id="gx">+000.0</span>
-                            </div>
-
-                            <!-- Pitch (Y) -->
-                            <div class="gyro-bipolar-row">
-                                <span class="gyro-axis-lbl">Y</span>
-                                <div class="gyro-track">
-                                    <div class="gyro-center-line"></div>
-                                    <div class="gyro-fill" id="gyroFillY" style="left:50%; width:0%;"></div>
-                                </div>
-                                <span class="gyro-val-text num" id="gy">+000.0</span>
-                            </div>
-
-                            <!-- Yaw (Z) -->
-                            <div class="gyro-bipolar-row">
-                                <span class="gyro-axis-lbl">Z</span>
-                                <div class="gyro-track">
-                                    <div class="gyro-center-line"></div>
-                                    <div class="gyro-fill" id="gyroFillZ" style="left:50%; width:0%;"></div>
-                                </div>
-                                <span class="gyro-val-text num" id="gz">+000.0</span>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
         </section>
 
         <!-- ==================== ZONA 3: PANEL CENTRAL (44% × 81%) — 2 LARGE GRAPHS ==================== -->
         <section class="panel">
 
-            <!-- 1. GRÁFICO SUPERIOR (55% DEL ALTO): ALTITUD BARO vs GPS -->
+            <!-- 1. GRÁFICO SUPERIOR: ALTITUD vs TIEMPO -->
             <div class="card chart-card" style="flex: 1.25 1 0;">
                 <div class="card-title">
                     <span>ALTITUD vs TIEMPO (m)</span>
-                    <span class="legend">
-                        <span><i style="background:#38bdf8; border-top:3px solid #38bdf8;"></i>BAROMÉTRICA</span>
-                        <span><i style="background:transparent; border-top:3px dashed #10b981;"></i>GPS</span>
-                    </span>
-                    <div class="scale-mode-pill" id="scaleSelector" title="Alternar modo de escala vertical (Trinquete / Auto / Fija)">
-                        <span class="scale-mode-lbl">ESCALA:</span>
-                        <button type="button" class="btn-scale-opt active" data-scale="ratchet" title="Sobre de vuelo con trinquete anti-bombeo">SOBRE</button>
-                        <button type="button" class="btn-scale-opt" data-scale="auto" title="Auto-escala dinámica por ventana">AUTO</button>
-                        <button type="button" class="btn-scale-opt" data-scale="fixed" title="Escala fija al apogeo planificado">FIJA</button>
-                    </div>
-                    <span class="hint">60 s</span>
                 </div>
                 <div class="chart-box"><canvas id="chAlt"></canvas></div>
             </div>
 
-            <!-- 2. GRÁFICO INFERIOR: G-LOAD (aceleración axial) -->
+            <!-- 2. GRÁFICO INFERIOR: G-LOAD (ACEL. AXIAL) -->
             <div class="card chart-card" style="flex: 1 1 0;">
                 <div class="card-title">
-                    <span>G-LOAD (ACEL. AXIAL — g)</span>
-                    <span class="legend">
-                        <span><i style="background:#b00020"></i>ACEL. AXIAL (g)</span>
-                        <span><i style="background:#f59e0b"></i>REF. 1 g</span>
-                    </span>
-                    <span class="hint">g (0 = ingravidez)</span>
+                    <span>CARGA G (ACEL. AXIAL — g)</span>
                 </div>
                 <div class="chart-box"><canvas id="chVel"></canvas></div>
             </div>
@@ -480,61 +607,47 @@ table.t td { padding: 3px 4px; border-bottom: 1px solid var(--soft-border); whit
                 </div>
 
                 <!-- Vector Guía de Rescate desde Base -->
-                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--soft); border:1.5px solid var(--border); padding:5px 10px; border-radius:3px; margin-top:6px;">
-                    <span style="font-size:11.5px; font-weight:900; color:var(--gray); letter-spacing:0.04em;">VECTOR DESDE BASE:</span>
-                    <span class="num" style="font-size:16px; font-weight:950; color:var(--accent);" id="guidanceVector">--- m • ---°</span>
+                <div class="guidance-banner">
+                    <span class="lbl">DESDE BASE:</span>
+                    <span class="val num" id="guidanceVector">--- m • ---°</span>
                 </div>
 
-                <!-- Coordenadas Tabulares Grandes (2x2) -->
-                <div class="coords" style="grid-template-columns: 1fr 1fr; margin-top: 6px;">
-                    <div style="background:var(--soft); padding:4px 8px; border-radius:3px; border:1px solid var(--soft-border);">
-                        <div class="k">LATITUD</div>
-                        <div class="v num" id="lat">---</div>
+                <!-- Coordenadas Compactas (Lat/Lon + Satélites) -->
+                <div class="coords-compact">
+                    <div class="coord-item">
+                        <span class="lbl">LAT / LON:</span>
+                        <span class="val num" id="latLonMerged">---, ---</span>
                     </div>
-                    <div style="background:var(--soft); padding:4px 8px; border-radius:3px; border:1px solid var(--soft-border);">
-                        <div class="k">LONGITUD</div>
-                        <div class="v num" id="lon">---</div>
-                    </div>
-                </div>
-                <div class="coords" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 6px;">
-                    <div style="background:var(--soft); padding:4px 8px; border-radius:3px; border:1px solid var(--soft-border);">
-                        <div class="k">ALTITUD GPS</div>
-                        <div class="v num" style="font-size:16px;" id="altGps">--- m</div>
-                    </div>
-                    <div style="background:var(--soft); padding:4px 8px; border-radius:3px; border:1px solid var(--soft-border);">
-                        <div class="k">VEL. SUELO</div>
-                        <div class="v num" style="font-size:16px;" id="groundSpeed">--- m/s</div>
-                    </div>
-                    <div style="background:var(--soft); padding:4px 8px; border-radius:3px; border:1px solid var(--soft-border);">
-                        <div class="k">SATÉLITES</div>
-                        <div class="v num" style="font-size:16px;" id="satellites">--</div>
+                    <div class="coord-item sat-badge">
+                        <span class="lbl">SAT:</span>
+                        <span class="val num" id="satellites">--</span>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- ==================== ZONA 5: FRANJA INFERIOR COMPACTA (2 PANELES) ==================== -->
+    <!-- ==================== ZONA 5: FRANJA INFERIOR COMPACTA (3 PANELES) ==================== -->
     <footer class="bottom">
 
         <!-- EVENTOS PIROTÉCNICOS (RECUPERACIÓN) -->
-        <div class="card basecard" style="padding: 6px 8px;">
+        <div class="card" style="padding: 6px 8px;">
             <div class="card-title" style="margin-bottom:4px;">
-                <span>EVENTOS PIROTÉCNICOS</span>
-                <span class="hint">RECUPERACIÓN</span>
+                <span>PIROTECNIA</span>
             </div>
-            <div class="annun-grid">
-                <div class="annun-card state-idle" id="annunDrogue">
-                    <div class="annun-label">DROGUE (FRENADO)</div>
-                    <div class="annun-state" id="annunDrogueState">[0: EN ESPERA]</div>
+            <div class="pyro-lamps">
+                <div class="pyro-lamp state-idle" id="annunDrogue">
+                    <div class="name">DROGUE</div>
+                    <div class="state" id="annunDrogueState">ESPERA</div>
                 </div>
-                <div class="annun-card state-idle" id="annunMain">
-                    <div class="annun-label">MAIN (PRINCIPAL)</div>
-                    <div class="annun-state" id="annunMainState">[0: EN ESPERA]</div>
+                <div class="pyro-lamp state-idle" id="annunMain">
+                    <div class="name">PRINCIPAL</div>
+                    <div class="state" id="annunMainState">ESPERA</div>
                 </div>
             </div>
         </div>
 
+        <!-- HITOS DE VUELO (ÚLTIMOS 3) -->
         <div class="card">
             <div class="card-title">
                 <span>HITOS DE VUELO</span>
@@ -543,24 +656,79 @@ table.t td { padding: 3px 4px; border-bottom: 1px solid var(--soft-border); whit
             <div class="scroll" id="eventLog"><div class="empty">Sin hitos registrados</div></div>
         </div>
 
-        <div class="card">
+        <!-- ALERTAS OPERACIONALES (ISA-18.2) -->
+        <div class="card" id="alertsCard">
             <div class="card-title">
-                <span>ALERTAS OPERACIONALES (ISA-18.2)</span>
+                <span>ALERTAS OPERACIONALES</span>
                 <span class="hint" id="alertStats">NOMINAL</span>
             </div>
             <div class="scroll" id="alertBox"></div>
         </div>
 
-        <!-- Hidden compatibility DOM nodes -->
-        <div style="display:none;" aria-hidden="true">
-            <span id="diagRxAfterP0">0</span>
-            <span id="diagSeq">---</span>
-            <span id="diagLoss5s">0,0 %</span>
-            <span id="diagRate">0,0 Hz</span>
-            <span id="diagCrc">100%</span>
-        </div>
-
     </footer>
+
+    <!-- ==================== MODAL DE DIAGNÓSTICOS & TELEMETRÍA DETALLADA ==================== -->
+    <div class="diag-overlay" id="diagOverlay" role="dialog" aria-modal="true" aria-labelledby="diagTitle">
+        <div class="diag-modal">
+            <div class="diag-header">
+                <h2 id="diagTitle">SENSORES &amp; DIAGNÓSTICOS DE TELEMETRÍA</h2>
+                <button type="button" class="btn-diag-close" id="btnCloseDiag" aria-label="Cerrar modal">&times;</button>
+            </div>
+            <div class="diag-body">
+                <!-- Tarjeta 1: Barómetro y Atmósfera -->
+                <div class="diag-card">
+                    <h3>BARÓMETRO &amp; ATMÓSFERA</h3>
+                    <div class="diag-row"><span class="k">Presión Baro:</span><span class="v" id="pressure">--- hPa</span></div>
+                    <div class="diag-row"><span class="k">Altitud GPS:</span><span class="v" id="altGpsDiag">--- m</span></div>
+                    <div class="diag-row"><span class="k">Divergencia (Δ Alt):</span><span class="v" id="deltaAlt">--- m</span></div>
+                </div>
+
+                <!-- Tarjeta 2: Acelerómetro Triaxial -->
+                <div class="diag-card">
+                    <h3>ACELERACIÓN LINEAL (g)</h3>
+                    <div class="diag-row"><span class="k">Axial (X):</span><span class="v" id="ax">+00.00</span></div>
+                    <div class="diag-row"><span class="k">Transversal (Y):</span><span class="v" id="ay">+00.00</span></div>
+                    <div class="diag-row"><span class="k">Transversal (Z):</span><span class="v" id="az">+00.00</span></div>
+                </div>
+
+                <!-- Tarjeta 3: Giróscopo Triaxial -->
+                <div class="diag-card">
+                    <h3>GIROSCOPIO (°/s)</h3>
+                    <div class="diag-row"><span class="k">Roll / Spin (X):</span><span class="v" id="gx">+000.0</span></div>
+                    <div class="diag-row"><span class="k">Pitch (Y):</span><span class="v" id="gy">+000.0</span></div>
+                    <div class="diag-row"><span class="k">Yaw (Z):</span><span class="v" id="gz">+000.0</span></div>
+                </div>
+
+                <!-- Tarjeta 4: GPS & Navegación Cruda -->
+                <div class="diag-card">
+                    <h3>GPS &amp; NAVEGACIÓN RAW</h3>
+                    <div class="diag-row"><span class="k">Latitud:</span><span class="v" id="lat">---</span></div>
+                    <div class="diag-row"><span class="k">Longitud:</span><span class="v" id="lon">---</span></div>
+                    <div class="diag-row"><span class="k">Altitud GPS:</span><span class="v" id="altGps">--- m</span></div>
+                    <div class="diag-row"><span class="k">Velocidad Suelo:</span><span class="v" id="groundSpeed">--- m/s</span></div>
+                </div>
+
+                <!-- Tarjeta 5: Enlace & Diagnóstico RF -->
+                <div class="diag-card">
+                    <h3>ENLACE RF &amp; PROTOCOLO</h3>
+                    <div class="diag-row"><span class="k">Secuencia (Seq):</span><span class="v" id="diagSeq">---</span></div>
+                    <div class="diag-row"><span class="k">Tasa Recepción:</span><span class="v" id="diagRate">0,0 Hz</span></div>
+                    <div class="diag-row"><span class="k">Pérdida (5 s):</span><span class="v" id="diagLoss5s">0,0 %</span></div>
+                    <div class="diag-row"><span class="k">Paquetes tras P0:</span><span class="v" id="diagRxAfterP0">0</span></div>
+                    <div class="diag-row"><span class="k">Integridad CRC:</span><span class="v" id="diagCrc">100%</span></div>
+                    <div class="diag-row"><span class="k">Temp. IMU:</span><span class="v" id="tempImuDiag">--- °C</span></div>
+                </div>
+
+                <!-- Tarjeta 6: Historial Completo de Eventos -->
+                <div class="diag-card diag-full">
+                    <h3>HISTORIAL COMPLETO DE HITOS Y EVENTOS</h3>
+                    <div class="scroll" style="max-height: 140px;" id="fullEventLog">
+                        <div class="empty">Sin hitos registrados</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 
@@ -1196,7 +1364,9 @@ function drawChart(canvasId, series, decimals, minSpan, signedLabels, fixedMin, 
 
 let lastTapeTime = 0;
 function drawTape(now) {
-    const { ctx, w, h } = fitCanvas($("tape"));
+    const canvas = $("tape");
+    if (!canvas) return;
+    const { ctx, w, h } = fitCanvas(canvas);
     ctx.clearRect(0, 0, w, h);
     if (state.altitude !== null) {
         if (state.altDisplay === null || Math.abs(state.altitude - state.altDisplay) > 500) {
@@ -1319,99 +1489,59 @@ function renderText() {            // ~10 Hz
     if (dashboardEl) {
         dashboardEl.classList.toggle("stale-dim", isFrozen);
     }
-    ["badgeFrozenAlt", "badgeFrozenImu"].forEach(id => {
-        const b = $(id);
-        if (b) b.classList.toggle("active", isFrozen);
-    });
+    const b = $("badgeFrozenAlt");
+    if (b) b.classList.toggle("active", isFrozen);
 
-    // 1. Altitud y Presión
+    // 1. Dinámica de Vuelo Primaria (Cockpit Principal)
     if (state.altitude !== null) {
         setText("altitude", fmt(state.altitude, 0));
         setText("altitudeMax", `${fmt(state.maxAltitude, 0)} m`);
-        setText("altitudeVz", state.vz !== null ? `${fmtSigned(state.vz, 1)} m/s` : "--- m/s");
+        if (state.vz !== null) {
+            const arrow = state.vz > 0.5 ? "▲ " : (state.vz < -0.5 ? "▼ " : "");
+            setText("altitudeVz", `${arrow}${fmtSigned(state.vz, 1)} m/s`);
+        } else {
+            setText("altitudeVz", "--- m/s");
+        }
     }
+    if (state.ax !== null) {
+        setText("gmeterVal", `${fmtSigned(state.ax, 1)} g`);
+    }
+
+    // 2. Sensores & Diagnósticos (Modal / Drawer)
     if (state.pressure !== null) {
         setText("pressure", `${fmt(state.pressure, 1)} hPa`);
     }
-
-    // GPS altitude readout
-    setText("gpsAltCard", state.altGps !== null ? `${fmt(state.altGps, 0)} m` : "--- m");
-
-    // 2. G-Meter Axial (accel_x: -2g a +12g)
-    const gmeterBar = $("gmeterBar");
-    const gmeterVal = $("gmeterVal");
-    const gPeakBoost = $("gmeterPeakBoost");
-    const gPeakShock = $("gmeterPeakShock");
-
-    if (gmeterBar && state.ax !== null) {
-        const ax = state.ax;
-        if (gmeterVal) gmeterVal.textContent = `${fmtSigned(ax, 1)}g`;
-
-        // Rango de -2g a +12g (14g de amplitud total)
-        const zeroPct = (2 / 14) * 100; // 14.28%
-        if (ax >= 0) {
-            const hPct = Math.min(100 - zeroPct, (ax / 14) * 100);
-            gmeterBar.style.bottom = `${zeroPct}%`;
-            gmeterBar.style.height = `${hPct}%`;
-        } else {
-            const hPct = Math.min(zeroPct, (Math.abs(ax) / 14) * 100);
-            gmeterBar.style.bottom = `${zeroPct - hPct}%`;
-            gmeterBar.style.height = `${hPct}%`;
-        }
-
-        // Marcas Dual Peak (Boost vs Paracaídas)
-        if (gPeakBoost) {
-            const boostPct = Math.min(100, Math.max(0, ((state.peakBoostG - (-2)) / 14) * 100));
-            gPeakBoost.style.bottom = `${boostPct}%`;
-        }
-        if (gPeakShock) {
-            const shockPct = Math.min(100, Math.max(0, ((state.peakShockG - (-2)) / 14) * 100));
-            gPeakShock.style.bottom = `${shockPct}%`;
-        }
+    if (state.altGps !== null) {
+        setText("altGpsDiag", `${fmt(state.altGps, 0)} m`);
+        setText("altGps", `${fmt(state.altGps, 0)} m`);
+    }
+    if (state.altitude !== null && state.altGps !== null) {
+        const delta = Math.abs(state.altitude - state.altGps);
+        setText("deltaAlt", `${fmt(delta, 0)} m`);
     }
 
-    // Micro-tabla Aceleración Lineal XYZ con signo explícito
-    if (state.ax !== null) setText("ax", fmtSigned(state.ax, 2));
-    if (state.ay !== null) setText("ay", fmtSigned(state.ay, 2));
-    if (state.az !== null) setText("az", fmtSigned(state.az, 2));
+    if (state.ax !== null) setText("ax", `${fmtSigned(state.ax, 2)} g`);
+    if (state.ay !== null) setText("ay", `${fmtSigned(state.ay, 2)} g`);
+    if (state.az !== null) setText("az", `${fmtSigned(state.az, 2)} g`);
 
-    // 3. Giroscopio Bipolar (±360°/s con centro 0)
-    function updateGyroAxis(fillId, textId, val, warnThresh, critThresh) {
-        const fill = $(fillId);
-        if (!fill) return;
-        setText(textId, val !== null ? fmtSigned(val, 1) : " --- ");
-        if (val === null || !Number.isFinite(val)) {
-            fill.style.width = "0%";
-            fill.className = "gyro-fill";
-            return;
-        }
-        const v = Math.max(-360, Math.min(360, val));
-        const absV = Math.abs(v);
-        const halfWidthPct = (absV / 360) * 50;
+    if (state.gx !== null) setText("gx", `${fmtSigned(state.gx, 1)} °/s`);
+    if (state.gy !== null) setText("gy", `${fmtSigned(state.gy, 1)} °/s`);
+    if (state.gz !== null) setText("gz", `${fmtSigned(state.gz, 1)} °/s`);
 
-        if (v >= 0) {
-            fill.style.left = "50%";
-            fill.style.width = `${halfWidthPct}%`;
-        } else {
-            fill.style.left = `${50 - halfWidthPct}%`;
-            fill.style.width = `${halfWidthPct}%`;
-        }
-
-        if (absV >= critThresh) fill.className = "gyro-fill crit";
-        else if (absV >= warnThresh) fill.className = "gyro-fill warn";
-        else fill.className = "gyro-fill";
+    if (state.tempImu !== null) {
+        setText("tempImuDiag", `${fmt(state.tempImu, 1)} °C`);
     }
 
-    updateGyroAxis("gyroFillX", "gx", state.gx, 180, 360); // Roll / Spin
-    updateGyroAxis("gyroFillY", "gy", state.gy, 180, 250); // Pitch / Tumble
-    updateGyroAxis("gyroFillZ", "gz", state.gz, 180, 250); // Yaw / Tumble
-
-    // 4. Pines de Pirotecnia
+    // 3. Pines de Pirotecnia
     if (state.pinFrenado !== null) setAnnunciator("annunDrogue", "annunDrogueState", state.pinFrenado);
     if (state.pinPrincipal !== null) setAnnunciator("annunMain", "annunMainState", state.pinPrincipal);
 
-    // 5. Coordenadas y Navegación
-    if (state.altGps !== null) setText("altGps", `${fmt(state.altGps, 0)} m`);
+    // 4. Coordenadas y Navegación
+    if (state.lat !== null && state.lon !== null) {
+        setText("latLonMerged", `${fmt(state.lat, 4)}°, ${fmt(state.lon, 4)}°`);
+        setText("lat", fmt(state.lat, 6));
+        setText("lon", fmt(state.lon, 6));
+    }
     if (state.groundSpeed !== null) setText("groundSpeed", `${fmt(state.groundSpeed, 1)} m/s`);
     if (state.satellites !== null) {
         setText("satellites", String(state.satellites));
@@ -1440,21 +1570,17 @@ function renderText() {            // ~10 Hz
     }
 }
 
-function setAnnunciator(cardId, stateId, val) {
-    const card = $(cardId);
+function setAnnunciator(lampId, stateId, val) {
+    const lamp = $(lampId);
     const stateEl = $(stateId);
-    if (!card || !stateEl) return;
+    if (!lamp || !stateEl) return;
 
     const isActive = Number(val) === 1;
-    const targetClass = isActive ? "annun-card state-active" : "annun-card state-idle";
-    if (card.className !== targetClass) {
-        card.className = targetClass;
-        if (isActive) {
-            stateEl.innerHTML = '<span class="annun-icon">[OK]</span>[1: DESPLEGADO]';
-        } else {
-            stateEl.textContent = "[0: EN ESPERA]";
-        }
+    const targetClass = isActive ? "pyro-lamp state-active" : "pyro-lamp state-idle";
+    if (lamp.className !== targetClass) {
+        lamp.className = targetClass;
     }
+    stateEl.textContent = isActive ? "DISPARADO" : "ESPERA";
 }
 
 function setOptional(id, value, fmtFn) {
@@ -1479,12 +1605,22 @@ function renderHeader() {          // ~2 Hz
 let eventsRendered = -1;
 let lastAlertsHtml = "";
 function renderLogs() {            // ~4 Hz
-    // 1. Registro de eventos
+    // 1. Registro de eventos (Últimos 3 en cockpit, todos en drawer)
     if (eventsRendered !== state.eventsVersion) {
         eventsRendered = state.eventsVersion;
-        $("eventLog").innerHTML = state.events.length
-            ? state.events.map(e => `<div class="ev-row"><span class="ev-time num">T+ ${elapsed(e.t)}</span>${escapeHtml(e.message)}</div>`).join("")
-            : '<div class="empty">Sin hitos registrados</div>';
+        const recent = state.events.slice(0, 3);
+        const eventLogEl = $("eventLog");
+        if (eventLogEl) {
+            eventLogEl.innerHTML = recent.length
+                ? recent.map(e => `<div class="ev-row"><span class="ev-time num">T+ ${elapsed(e.t)}</span>${escapeHtml(e.message)}</div>`).join("")
+                : '<div class="empty">Sin hitos registrados</div>';
+        }
+        const fullLogEl = $("fullEventLog");
+        if (fullLogEl) {
+            fullLogEl.innerHTML = state.events.length
+                ? state.events.map(e => `<div class="ev-row"><span class="ev-time num">T+ ${elapsed(e.t)}</span>${escapeHtml(e.message)}</div>`).join("")
+                : '<div class="empty">Sin hitos registrados</div>';
+        }
     }
 
     // 2. Mantenimiento de ventana de 5s para paquetes
@@ -1590,20 +1726,27 @@ function renderLogs() {            // ~4 Hz
         alerts.push({ badge: "info", text: "Tramas con error de CRC", val: `${state.stats.invalid}` });
     }
 
-    if (alerts.length === 0) {
-        alerts.push({ badge: "ok", text: "Todos los sistemas nominales", val: "OK" });
+    const hasActiveAlerts = alerts.some(a => a.badge === "crit" || a.badge === "warn");
+    let alertsHtml = "";
+    if (!hasActiveAlerts) {
+        alertsHtml = `
+            <div class="al-nominal-pill">
+                <span class="al-badge ok">OK</span>
+                <span>TODOS LOS SISTEMAS NOMINALES</span>
+            </div>`;
+    } else {
+        alertsHtml = alerts.map(a =>
+            `<div class="al-row">
+                <span class="al-badge ${a.badge}">${a.badge === "crit" ? "CRÍTICO" : a.badge === "warn" ? "ALERTA" : a.badge === "ok" ? "OK" : "INFO"}</span>
+                <span class="al-desc">${a.text}</span>
+                <span class="al-val">${a.val}</span>
+            </div>`
+        ).join("");
     }
-
-    const alertsHtml = alerts.map(a =>
-        `<div class="al-row">
-            <span class="al-badge ${a.badge}">${a.badge === "crit" ? "CRÍTICO" : a.badge === "warn" ? "ALERTA" : a.badge === "ok" ? "OK" : "INFO"}</span>
-            <span class="al-desc">${a.text}</span>
-            <span class="al-val">${a.val}</span>
-        </div>`
-    ).join("");
     if (alertsHtml !== lastAlertsHtml) {
         lastAlertsHtml = alertsHtml;
-        $("alertBox").innerHTML = alertsHtml;
+        const alertBoxEl = $("alertBox");
+        if (alertBoxEl) alertBoxEl.innerHTML = alertsHtml;
     }
     setText("alertStats", alerts.some(a => a.badge === "crit") ? "CRÍTICO" : (alerts.some(a => a.badge === "warn") ? "AVISO" : "NOMINAL"));
 }
@@ -1814,9 +1957,39 @@ function loop(now) {
     requestAnimationFrame(loop);
 }
 
+/* ---------- cajón de diagnósticos & sensores ---------- */
+
+function initDiagnosticsDrawer() {
+    const overlay = $("diagOverlay");
+    const btnOpen = $("btnOpenDiag");
+    const btnClose = $("btnCloseDiag");
+    if (!overlay) return;
+
+    function openModal() {
+        overlay.classList.add("open");
+    }
+    function closeModal() {
+        overlay.classList.remove("open");
+    }
+
+    if (btnOpen) btnOpen.addEventListener("click", openModal);
+    if (btnClose) btnClose.addEventListener("click", closeModal);
+
+    overlay.addEventListener("click", e => {
+        if (e.target === overlay) closeModal();
+    });
+
+    document.addEventListener("keydown", e => {
+        if (e.key === "Escape" && overlay.classList.contains("open")) {
+            closeModal();
+        }
+    });
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     initMap();
     initScaleSelector();
+    initDiagnosticsDrawer();
     await loadHistory();
     loadStatus();
     connect();
