@@ -255,6 +255,130 @@ canvas { display: block; }
 .pyro-lamp.state-active .name { color: #10b981; }
 .pyro-lamp.state-active .state { color: #10b981; font-weight: 950; }
 
+.pyro-lamp.state-alert {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+}
+.pyro-lamp.state-alert .name { color: #ef4444; }
+.pyro-lamp.state-alert .state { color: #ef4444; font-weight: 950; }
+
+/* ===== STATUS BLOCKS & DECISION-ORIENTED INDICATORS ===== */
+.status-block {
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    border-radius: 4px;
+}
+
+/* Reserved Health Colors (Link, G-Load, Alerts, Fix) */
+.status-ok {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-color: #10b981 !important;
+    color: #10b981 !important;
+}
+.status-ok .v, .status-ok .val { color: #10b981 !important; }
+
+.status-warn {
+    background: rgba(245, 158, 11, 0.18) !important;
+    border-color: #f59e0b !important;
+    color: #f59e0b !important;
+}
+.status-warn .v, .status-warn .val { color: #f59e0b !important; }
+
+.status-bad {
+    background: rgba(239, 68, 68, 0.22) !important;
+    border-color: #ef4444 !important;
+    color: #ef4444 !important;
+}
+.status-bad .v, .status-bad .val { color: #ef4444 !important; }
+
+#linkBlock {
+    padding: 2px 8px;
+    border: 1.5px solid transparent;
+}
+
+/* FASE: Dedicated Purple/Violet Family (Never green, amber, or red) */
+#phaseBlock {
+    padding: 2px 8px;
+    border: 1.5px solid transparent;
+}
+.phase-standby {
+    border-color: var(--border) !important;
+    background: var(--soft) !important;
+}
+.phase-standby .phase {
+    background: transparent !important;
+    border: 1.5px solid var(--border) !important;
+    color: var(--ink) !important;
+}
+
+.phase-ascent {
+    border-color: #8b5cf6 !important;
+    background: rgba(139, 92, 246, 0.16) !important;
+}
+.phase-ascent .phase {
+    background: #8b5cf6 !important;
+    border-color: #7c3aed !important;
+    color: #ffffff !important;
+}
+
+.phase-apogee {
+    border-color: #d946ef !important;
+    background: rgba(217, 70, 239, 0.18) !important;
+}
+.phase-apogee .phase {
+    background: #d946ef !important;
+    border-color: #c026d3 !important;
+    color: #ffffff !important;
+}
+
+.phase-descent {
+    border-color: #6366f1 !important;
+    background: rgba(99, 102, 241, 0.16) !important;
+}
+.phase-descent .phase {
+    background: #6366f1 !important;
+    border-color: #4f46e5 !important;
+    color: #ffffff !important;
+}
+
+.phase-landed {
+    border-color: var(--border) !important;
+    background: var(--ink) !important;
+}
+.phase-landed .phase {
+    background: var(--bg) !important;
+    border-color: var(--border) !important;
+    color: var(--ink) !important;
+}
+.phase-landed .k {
+    color: var(--bg) !important;
+    opacity: 0.85;
+}
+
+@keyframes phasePulseAnim {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+}
+.phase-pulse {
+    animation: phasePulseAnim 0.7s ease-out;
+}
+
+/* G-Meter Cell Thresholds */
+#gmeterCell.status-warn {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+}
+#gmeterCell.status-warn .val { color: #f59e0b; }
+
+#gmeterCell.status-bad {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+}
+#gmeterCell.status-bad .val { color: #ef4444; }
+
+.sat-badge.status-ok .val { color: var(--ok); }
+.sat-badge.status-bad .val { color: var(--bad); }
+
 .scroll { flex: 1; min-height: 0; overflow-y: auto; font-size: 13.5px; }
 .empty { color: var(--muted); font-style: italic; padding: 4px; font-size: 13px; }
 .ev-time { font-weight: 950; width: 95px; flex-shrink: 0; display: inline-block; color: var(--accent); }
@@ -516,9 +640,9 @@ canvas { display: block; }
 
         <div class="hgroup">
             <div class="hcell"><span class="k">TIEMPO DE MISIÓN</span><span class="v clock num">T+ <span id="clock">00:00:00</span></span></div>
-            <div class="hcell"><span class="k">FASE DE VUELO</span><span class="phase" id="phase">---</span></div>
+            <div class="hcell status-block" id="phaseBlock"><span class="k">FASE DE VUELO</span><span class="phase" id="phase">---</span></div>
             <div class="hcell"><span class="k">SEÑAL RF (RSSI)</span><span class="v num nd" id="rssi">N/D</span></div>
-            <div class="hcell"><span class="k">ENLACE</span><span class="v" style="font-size:15px"><span class="dot" id="linkDot"></span><span id="linkStatus">DESCONECTADO</span></span></div>
+            <div class="hcell status-block" id="linkBlock"><span class="k">ENLACE</span><span class="v" style="font-size:14px"><span class="dot" id="linkDot"></span><span id="linkStatus">DESCONECTADO</span></span></div>
         </div>
     </header>
 
@@ -552,7 +676,7 @@ canvas { display: block; }
                             <span class="lbl">APOGEO (MÁX)</span>
                             <span class="val num" id="altitudeMax">--- m</span>
                         </div>
-                        <div class="flight-cell flight-cell-wide">
+                        <div class="flight-cell flight-cell-wide" id="gmeterCell">
                             <span class="lbl">CARGA G (AXIAL)</span>
                             <span class="val num" id="gmeterVal">+0.0g</span>
                         </div>
@@ -618,7 +742,7 @@ canvas { display: block; }
                         <span class="lbl">LAT / LON:</span>
                         <span class="val num" id="latLonMerged">---, ---</span>
                     </div>
-                    <div class="coord-item sat-badge">
+                    <div class="coord-item sat-badge" id="satBadge">
                         <span class="lbl">SAT:</span>
                         <span class="val num" id="satellites">--</span>
                     </div>
@@ -1505,6 +1629,12 @@ function renderText() {            // ~10 Hz
     }
     if (state.ax !== null) {
         setText("gmeterVal", `${fmtSigned(state.ax, 1)} g`);
+        const absAx = Math.abs(state.ax);
+        const gCell = $("gmeterCell");
+        if (gCell) {
+            gCell.classList.toggle("status-bad", absAx >= 10);
+            gCell.classList.toggle("status-warn", absAx >= 8 && absAx < 10);
+        }
     }
 
     // 2. Sensores & Diagnósticos (Modal / Drawer)
@@ -1532,9 +1662,17 @@ function renderText() {            // ~10 Hz
         setText("tempImuDiag", `${fmt(state.tempImu, 1)} °C`);
     }
 
-    // 3. Pines de Pirotecnia
-    if (state.pinFrenado !== null) setAnnunciator("annunDrogue", "annunDrogueState", state.pinFrenado);
-    if (state.pinPrincipal !== null) setAnnunciator("annunMain", "annunMainState", state.pinPrincipal);
+    // 3. Pines de Pirotecnia (con detección de overdue / fallo de eyección)
+    const phaseStr = String(state.statusText || "").toUpperCase();
+    const inFlight = state.liftoffDetected || (state.statusText && !["STANDBY", "PLATAFORMA", "PRE-LAUNCH"].includes(phaseStr));
+    const pastApogee = phaseStr.includes("APOGEE") || phaseStr.includes("APOGEO") || phaseStr.includes("DROGUE") || phaseStr.includes("MAIN") || phaseStr.includes("PRINCIPAL") || phaseStr.includes("LANDED") || phaseStr.includes("ATERRIZA");
+    const pastMain = phaseStr.includes("MAIN") || phaseStr.includes("PRINCIPAL") || phaseStr.includes("LANDED") || phaseStr.includes("ATERRIZA");
+
+    const drogueOverdue = Boolean(inFlight && pastApogee && Number(state.pinFrenado || 0) === 0);
+    const mainOverdue = Boolean(inFlight && pastMain && Number(state.pinPrincipal || 0) === 0);
+
+    setAnnunciator("annunDrogue", "annunDrogueState", state.pinFrenado, drogueOverdue);
+    setAnnunciator("annunMain", "annunMainState", state.pinPrincipal, mainOverdue);
 
     // 4. Coordenadas y Navegación
     if (state.lat !== null && state.lon !== null) {
@@ -1545,11 +1683,17 @@ function renderText() {            // ~10 Hz
     if (state.groundSpeed !== null) setText("groundSpeed", `${fmt(state.groundSpeed, 1)} m/s`);
     if (state.satellites !== null) {
         setText("satellites", String(state.satellites));
+        const hasFix = Number(state.satellites) >= 4;
+        const satBadge = $("satBadge");
+        if (satBadge) {
+            satBadge.classList.toggle("status-ok", hasFix);
+            satBadge.classList.toggle("status-bad", !hasFix);
+        }
         const mapWrap = $("mapWrap");
         if (mapWrap) {
-            mapWrap.classList.toggle("no-fix", state.satellites < 4);
+            mapWrap.classList.toggle("no-fix", !hasFix);
         }
-        setText("fixQuality", state.satellites >= 4 ? "3D FIX" : "SIN FIX");
+        setText("fixQuality", hasFix ? "3D FIX" : "SIN FIX");
     }
 
     // Vector de Rescate desde Base
@@ -1570,17 +1714,27 @@ function renderText() {            // ~10 Hz
     }
 }
 
-function setAnnunciator(lampId, stateId, val) {
+function setAnnunciator(lampId, stateId, val, isOverdue = false) {
     const lamp = $(lampId);
     const stateEl = $(stateId);
     if (!lamp || !stateEl) return;
 
     const isActive = Number(val) === 1;
-    const targetClass = isActive ? "pyro-lamp state-active" : "pyro-lamp state-idle";
+    let targetClass = "pyro-lamp state-idle";
+    let text = "ESPERA";
+
+    if (isActive) {
+        targetClass = "pyro-lamp state-active";
+        text = "DISPARADO";
+    } else if (isOverdue) {
+        targetClass = "pyro-lamp state-alert";
+        text = "NO DISPARÓ";
+    }
+
     if (lamp.className !== targetClass) {
         lamp.className = targetClass;
     }
-    stateEl.textContent = isActive ? "DISPARADO" : "ESPERA";
+    stateEl.textContent = text;
 }
 
 function setOptional(id, value, fmtFn) {
@@ -1589,6 +1743,8 @@ function setOptional(id, value, fmtFn) {
     setText(id, fmtFn(value));
     el.className = "v num";
 }
+
+let lastRenderedPhase = null;
 
 function renderHeader() {          // ~2 Hz
     updateGlobalHeader({
@@ -1600,6 +1756,67 @@ function renderHeader() {          // ~2 Hz
         lastPacketAt: state.lastPacketAt,
         tempImu: state.tempImu
     });
+
+    const now = Date.now();
+    const silenceMs = state.lastPacketAt !== null ? (now - state.lastPacketAt) : 0;
+    const loss = state.lossRecentPercent || 0;
+
+    // 1. Enlace Status Block
+    // Amber: >1s silence OR packet loss > 5%
+    // Red: Disconnected (>3s silence) OR loss > 15%
+    // Green: Connected, loss < 5%
+    const isDisconnected = !state.connected || (state.lastPacketAt !== null && silenceMs > 3000) || loss > 15;
+    const isDegraded = !isDisconnected && ((state.lastPacketAt !== null && silenceMs > 1000) || loss > 5);
+
+    const linkBlock = $("linkBlock");
+    const linkStatus = $("linkStatus");
+    if (linkBlock) {
+        linkBlock.classList.toggle("status-bad", isDisconnected);
+        linkBlock.classList.toggle("status-warn", isDegraded);
+        linkBlock.classList.toggle("status-ok", !isDisconnected && !isDegraded && state.connected);
+    }
+    if (linkStatus) {
+        if (!state.connected) {
+            linkStatus.textContent = "DESCONECTADO";
+        } else if (silenceMs > 3000) {
+            linkStatus.textContent = `PERDIDO (+${(silenceMs/1000).toFixed(1)}s)`;
+        } else if (loss > 15) {
+            linkStatus.textContent = `PÉRDIDA ${loss.toFixed(0)}%`;
+        } else if (silenceMs > 1000) {
+            linkStatus.textContent = `SILENCIO (+${(silenceMs/1000).toFixed(1)}s)`;
+        } else if (loss > 5) {
+            linkStatus.textContent = `PÉRDIDA ${loss.toFixed(0)}%`;
+        } else {
+            linkStatus.textContent = "CONECTADO";
+        }
+    }
+
+    // 2. Fase Status Block (Paleta exclusiva violeta/índigo, sin colisión con estados de salud)
+    const phaseBlock = $("phaseBlock");
+    const currentPhase = String(state.statusText || "").toUpperCase();
+    let phaseClass = "phase-standby";
+    if (currentPhase.includes("POWERED") || currentPhase.includes("BURNOUT") || currentPhase.includes("MOTOR") || currentPhase.includes("EMPUJE") || currentPhase.includes("ASCENT")) {
+        phaseClass = "phase-ascent";
+    } else if (currentPhase.includes("APOGEE") || currentPhase.includes("APOGEO")) {
+        phaseClass = "phase-apogee";
+    } else if (currentPhase.includes("DROGUE") || currentPhase.includes("MAIN") || currentPhase.includes("PRINCIPAL") || currentPhase.includes("FRENADO")) {
+        phaseClass = "phase-descent";
+    } else if (currentPhase.includes("LANDED") || currentPhase.includes("ATERRIZA")) {
+        phaseClass = "phase-landed";
+    }
+
+    if (phaseBlock) {
+        if (!phaseBlock.classList.contains(phaseClass)) {
+            phaseBlock.classList.remove("phase-standby", "phase-ascent", "phase-apogee", "phase-descent", "phase-landed");
+            phaseBlock.classList.add(phaseClass);
+            if (lastRenderedPhase !== null && lastRenderedPhase !== phaseClass) {
+                phaseBlock.classList.remove("phase-pulse");
+                void phaseBlock.offsetWidth; // trigger reflow
+                phaseBlock.classList.add("phase-pulse");
+            }
+            lastRenderedPhase = phaseClass;
+        }
+    }
 }
 
 let eventsRendered = -1;
