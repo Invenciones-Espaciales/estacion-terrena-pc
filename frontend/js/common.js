@@ -239,13 +239,13 @@ window.updateGlobalHeader = window.updateGlobalHeader || function updateGlobalHe
     const dotEl = window.$("linkDot");
     const linkStatusEl = window.$("linkStatus");
     const silenceMs = lastPacketAt !== null ? (now - lastPacketAt) : 0;
-    const isFrozen = connected && lastPacketAt !== null && silenceMs > 450;
-    const isStale = connected && lastPacketAt !== null && silenceMs > 2000;
+    const isDisconnected = !connected || (lastPacketAt !== null && silenceMs > 3000) || lossPercent > 15;
+    const isDegraded = !isDisconnected && connected && ((lastPacketAt !== null && silenceMs > 1000) || lossPercent > 5);
 
     if (dotEl) {
-        if (!connected) {
+        if (isDisconnected) {
             dotEl.className = "dot";
-        } else if (isFrozen) {
+        } else if (isDegraded) {
             dotEl.className = "dot warn";
         } else {
             dotEl.className = "dot online";
@@ -256,11 +256,17 @@ window.updateGlobalHeader = window.updateGlobalHeader || function updateGlobalHe
         if (!connected) {
             linkStatusEl.textContent = "DESCONECTADO";
             linkStatusEl.style.color = "var(--bad)";
-        } else if (isStale) {
+        } else if (lastPacketAt !== null && silenceMs > 3000) {
             linkStatusEl.textContent = `SIN SEÑAL (+${(silenceMs / 1000).toFixed(1)}s)`;
             linkStatusEl.style.color = "var(--bad)";
-        } else if (isFrozen) {
+        } else if (lossPercent > 15) {
+            linkStatusEl.textContent = `PÉRDIDA ${lossPercent.toFixed(0)}%`;
+            linkStatusEl.style.color = "var(--bad)";
+        } else if (lastPacketAt !== null && silenceMs > 1000) {
             linkStatusEl.textContent = `SILENCIO (+${(silenceMs / 1000).toFixed(1)}s)`;
+            linkStatusEl.style.color = "var(--warn)";
+        } else if (lossPercent > 5) {
+            linkStatusEl.textContent = `PÉRDIDA ${lossPercent.toFixed(0)}%`;
             linkStatusEl.style.color = "var(--warn)";
         } else {
             linkStatusEl.textContent = "CONECTADO";
