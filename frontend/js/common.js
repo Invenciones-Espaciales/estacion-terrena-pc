@@ -470,9 +470,19 @@ if (document.readyState === "loading") {
 
     let simTimeSec = getDefaultSimTime();
     try {
-        const savedT = parseFloat(sessionStorage.getItem("gs_demo_sim_time"));
-        if (Number.isFinite(savedT) && savedT >= 0 && savedT <= CYCLE_DURATION_S) {
-            simTimeSec = savedT;
+        const urlParams = new URLSearchParams(window.location.search);
+        const tQuery = urlParams.get("t") || urlParams.get("time");
+        if (tQuery !== null) {
+            const parsed = parseFloat(tQuery);
+            if (Number.isFinite(parsed) && parsed >= 0) {
+                simTimeSec = parsed % CYCLE_DURATION_S;
+                sessionStorage.setItem("gs_demo_sim_time", simTimeSec.toFixed(1));
+            }
+        } else {
+            const savedT = parseFloat(sessionStorage.getItem("gs_demo_sim_time"));
+            if (Number.isFinite(savedT) && savedT >= 0 && savedT <= CYCLE_DURATION_S) {
+                simTimeSec = savedT;
+            }
         }
     } catch (e) {}
 
@@ -1221,6 +1231,7 @@ if (document.readyState === "loading") {
                     <input type="range" class="demo-hud-slider" id="demoHudSlider" min="0" max="290" step="0.5" value="${demoEngine.simTimeSec.toFixed(1)}" title="Línea de tiempo (0s - 290s)">
                 </div>
                 <div class="demo-hud-presets">
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="0" data-start="0" data-end="60" title="Inicio / Boot y calibración GPS (0s)">Inicio (0s)</button>
                     <button type="button" class="demo-hud-btn demo-preset-btn" data-time="125" data-start="60" data-end="150" title="Rampa Estabilizada">Rampa GO</button>
                     <button type="button" class="demo-hud-btn demo-preset-btn" data-time="152" data-start="150" data-end="176" title="Despegue (T-3s)">Despegue</button>
                     <button type="button" class="demo-hud-btn demo-preset-btn" data-time="176" data-start="176" data-end="206" title="Apogeo y Drogue">Apogeo</button>

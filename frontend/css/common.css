@@ -1178,8 +1178,8 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
 
     .demo-hud-presets {
         display: grid !important;
-        grid-template-columns: repeat(5, 1fr) !important;
-        gap: 4px !important;
+        grid-template-columns: repeat(6, 1fr) !important;
+        gap: 3px !important;
         width: 100% !important;
     }
 

@@ -815,6 +815,12 @@ class PacketStatistics:
             "loss_percent": loss_percent,
         }
 
+    def reset(self):
+        self.received = 0
+        self.lost = 0
+        self.invalid = 0
+        self.last_sequence = None
+
 
 # ============================================================
 # DATABASE (SQLITE)
@@ -1126,6 +1132,8 @@ class RuntimeState:
     history: deque = field(default_factory=lambda: deque(maxlen=3600))
     audit_logs: deque[dict[str, Any]] = field(default_factory=lambda: deque(maxlen=500))
     demo_mode: bool = False
+    demo_time: float = 0.0
+    demo_reset_requested: bool = False
     save_db_override: Optional[bool] = None
     save_csv_override: Optional[bool] = None
     active_serial_port: Optional[str] = None
@@ -1363,19 +1371,26 @@ async def demo_telemetry_loop():
     """Generates synthetic 290-second flight kinematics at 10 Hz in RAM without serial hardware or disk I/O."""
     runtime.connected = True
     runtime.active_serial_port = "SIMULADOR_DEMO (10 Hz)"
-    logger.info("Demo telemetry loop started @ 10 Hz (pure RAM generation, SD card writes disabled)")
+    logger.info("Demo telemetry loop started @ 10 Hz from t=%.1fs (pure RAM generation, SD card writes disabled)", runtime.demo_time)
     await websocket_manager.broadcast({"type": "connection", "connected": True})
 
     CYCLE_DURATION_S = 290.0
     BASE_LAT = -34.6037
     BASE_LON = -58.3816
     BASE_PRESS = 1013.25
-    t = 125.0
-    seq = 100
-    boot_time = time.time() - 125.0
+    t = runtime.demo_time
+    seq = 1
+    boot_time = time.time() - t
 
     while True:
         try:
+            if runtime.demo_reset_requested:
+                runtime.demo_reset_requested = False
+                t = runtime.demo_time
+                seq = 1
+                boot_time = time.time() - t
+                logger.info("Demo simulation reset: restarted from t=%.1fs (sequence 1)", t)
+
             now_ms = int((time.time() - boot_time) * 1000) & 0xFFFFFFFF
             t_mod = t % CYCLE_DURATION_S
 
@@ -2059,6 +2074,19 @@ async def toggle_storage(request: Request):
     }
 
 
+@app.post("/api/demo/reset")
+async def demo_reset(t: float = 0.0):
+    """Reset the backend demo flight simulation to t=0 (the beginning) or any target second."""
+    runtime.demo_time = max(0.0, float(t))
+    runtime.demo_reset_requested = True
+    runtime.frames_received = 0
+    runtime.history.clear()
+    if statistics:
+        statistics.reset()
+    logger.info("Demo flight simulation reset to t=%.1fs (from the beginning)", runtime.demo_time)
+    return {"status": "ok", "message": f"Demo reset to t={runtime.demo_time:.1f}s", "time": runtime.demo_time}
+
+
 # ============================================================
 # STARTUP & SHUTDOWN LIFECYCLE
 # ============================================================
@@ -2185,6 +2213,12 @@ def parse_cli_args(args: Optional[list[str]] = None) -> argparse.Namespace:
         help="Run in demo/simulation mode with synthetic 10 Hz telemetry (SD card protection: DB saving off)",
     )
     parser.add_argument(
+        "--start-time", "-t",
+        type=float,
+        default=0.0,
+        help="Initial flight simulation time in seconds for demo mode (default: 0.0, from the beginning)",
+    )
+    parser.add_argument(
         "--no-db",
         action="store_true",
         help="Disable SQLite database persistence (protects Raspberry Pi SD card flash memory)",
@@ -2223,6 +2257,7 @@ if __name__ == "__main__":
     cli = parse_cli_args()
     if cli.demo:
         runtime.demo_mode = True
+        runtime.demo_time = max(0.0, float(cli.start_time))
     if cli.no_db or cli.no_storage:
         runtime.save_db_override = False
     elif cli.save_db_in_demo:
