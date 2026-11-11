@@ -256,6 +256,104 @@ canvas { display: block; }
 .chart-box { position: relative; flex: 1; min-height: 0; }
 .chart-box canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 
+/* ===== ENLACE RF & HARDWARE (CARD SUPERIOR DERECHA) ===== */
+.rf-panel-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+.rf-ribbon-wrap {
+    background: var(--soft);
+    border: 1px solid var(--soft-border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.rf-ribbon-canvas {
+    width: 100%;
+    height: 24px;
+    display: block;
+    border-radius: 3px;
+    background: rgba(15, 23, 42, 0.04);
+}
+html[data-theme="dark"] .rf-ribbon-canvas {
+    background: rgba(15, 23, 42, 0.45);
+}
+.rf-ribbon-legend {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--muted);
+    font-family: "JetBrains Mono", Consolas, monospace;
+    padding: 0 2px;
+}
+.rf-ribbon-legend span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.dot-sm {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.dot-sm.ok { background: #10b981; }
+.dot-sm.yellow { background: #eab308; }
+.dot-sm.warn { background: #f59e0b; }
+.dot-sm.bad { background: #ef4444; }
+
+.trend-pill.yellow {
+    color: #b45309;
+    border-color: rgba(234, 179, 8, 0.45);
+    background: rgba(234, 179, 8, 0.12);
+}
+html[data-theme="dark"] .trend-pill.yellow {
+    color: #facc15;
+    border-color: rgba(250, 204, 21, 0.45);
+    background: rgba(250, 204, 21, 0.12);
+}
+
+.rf-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+.rf-cell {
+    background: var(--soft);
+    border: 1px solid var(--soft-border);
+    border-radius: 4px;
+    padding: 3.5px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.rf-cell .lbl {
+    font-size: 8.5px;
+    font-weight: 800;
+    color: var(--muted);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rf-cell .val {
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--ink);
+    font-family: "JetBrains Mono", Consolas, monospace;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* ===== MAPA & NAVEGACIÓN ===== */
 #gpsMap { flex: 1; min-height: 80px; border: 1px solid var(--soft-border); border-radius: 6px; overflow: hidden; }
 .guidance-banner {
@@ -726,6 +824,54 @@ canvas { display: block; }
 
         <!-- ==================== ZONA 4: COLUMNA DERECHA (30% × 81%) ==================== -->
         <section class="panel">
+            <!-- 1. PANEL SUPERIOR DERECHO: ENLACE RF & HARDWARE CON CINTA DE SALUD -->
+            <div class="card rf-panel-card">
+                <div class="card-title">
+                    <span>ENLACE RF &amp; HARDWARE</span>
+                    <span class="trend-pill" id="rfHealthBadge">DESCONECTADO</span>
+                </div>
+
+                <!-- Cinta Gráfica de Salud de Conexión (Health Ribbon) -->
+                <div class="rf-ribbon-wrap">
+                    <canvas id="healthRibbonCanvas" width="340" height="24" class="rf-ribbon-canvas"></canvas>
+                    <div class="rf-ribbon-legend">
+                        <span><i class="dot-sm ok"></i>OK</span>
+                        <span><i class="dot-sm yellow"></i>Baja señal</span>
+                        <span><i class="dot-sm warn"></i>Pérdida (<b id="rfLossVal" class="num">0.0%</b>)</span>
+                        <span><i class="dot-sm bad"></i>Desconectado</span>
+                    </div>
+                </div>
+
+                <!-- Métricas Críticas de RF & Hardware -->
+                <div class="rf-metrics-grid">
+                    <div class="rf-cell">
+                        <span class="lbl">SECUENCIA</span>
+                        <span class="val num" id="rfSeq">---</span>
+                    </div>
+                    <div class="rf-cell">
+                        <span class="lbl">TASA RX</span>
+                        <span class="val num" id="rfRate">0.0 Hz</span>
+                    </div>
+                    <div class="rf-cell">
+                        <span class="lbl">PÉRDIDA 5s</span>
+                        <span class="val num" id="rfLoss">0.0 %</span>
+                    </div>
+                    <div class="rf-cell">
+                        <span class="lbl">RSSI RF</span>
+                        <span class="val num" id="rfRssi">N/D</span>
+                    </div>
+                    <div class="rf-cell">
+                        <span class="lbl">TEMP. IMU</span>
+                        <span class="val num" id="rfTempImu">--- °C</span>
+                    </div>
+                    <div class="rf-cell">
+                        <span class="lbl">CRC16</span>
+                        <span class="val num" id="rfCrc">100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. PANEL INFERIOR DERECHO: POSICIÓN Y NAVEGACIÓN GPS -->
             <div class="card grow">
                 <div class="card-title">
                     <span>POSICIÓN Y NAVEGACIÓN GPS</span>
@@ -985,6 +1131,11 @@ const state = {
     seqWindow: [],      // { t, received, lost }
     lossRecentPercent: 0,
 
+    // Cinta gráfica de salud de enlace RF (100 bloques: 0: vacío, 1: ok verde, 2: baja señal amarillo, 3: pérdida ámbar, 4: desconectado rojo)
+    healthSlots: new Array(100).fill(0),
+    lastPacketArrival: 0,
+    lastSilentSlotPush: 0,
+
     hist: { alt: [], altGps: [], ax: [], ay: [], az: [], vz: [], speed: [] },
     markers: [],
 
@@ -1132,6 +1283,26 @@ function ingest(message, isHistory = false) {
         state.lastSeq = seq;
     }
     state.seqWindow.push({ t: isHistory ? frameEpochMs : now, rec: 1, lost: lostInStep });
+
+    // Actualización de ranuras de la cinta de salud de conexión (Health Ribbon)
+    if (!isHistory) {
+        if (lostInStep > 0) {
+            for (let k = 0; k < Math.min(lostInStep, 15); k++) {
+                state.healthSlots.push(3); // Ámbar: pérdida de paquete
+                if (state.healthSlots.length > 100) state.healthSlots.shift();
+            }
+        }
+        let slotType = 1; // Verde: todo OK
+        const currentRssi = Number.isFinite(Number(d.rssi)) ? Number(d.rssi) : state.rssi;
+        if (currentRssi !== null && currentRssi < -85) {
+            slotType = 2; // Amarillo: baja señal
+        } else if (state.lossRecentPercent > 5) {
+            slotType = 3; // Ámbar: pérdida de paquetes reciente
+        }
+        state.healthSlots.push(slotType);
+        if (state.healthSlots.length > 100) state.healthSlots.shift();
+        state.lastPacketArrival = now;
+    }
 
     const hasTs = Number.isFinite(Number(d.timestamp));
     let ts;
@@ -1839,24 +2010,71 @@ function renderLogs() {            // ~4 Hz
     state.rxRate = rate;
     const age = state.lastPacketAt === null ? "--" : `${((now - state.lastPacketAt) / 1000).toFixed(1)} s`;
 
-    setText("eventStats", `${state.events.length} eventos`);
+    // Avance de ranuras rojas ante desconexión o silencio prolongado (>1.0s)
+    const silenceMs = state.lastPacketAt ? now - state.lastPacketAt : 999999;
+    if (!state.connected || silenceMs > 1000) {
+        if (now - state.lastSilentSlotPush >= 250) {
+            state.lastSilentSlotPush = now;
+            state.healthSlots.push(4); // Rojo: desconectado / silencio
+            if (state.healthSlots.length > 100) state.healthSlots.shift();
+        }
+    }
 
-    // Actualización de tarjeta de Diagnóstico de Enlace
-    setText("diagRxAfterP0", state.rxAfterP0.toLocaleString("es-AR"));
-    setText("diagSeq", state.lastSeq !== null ? state.lastSeq.toLocaleString("es-AR") : "---");
-    setText("diagLoss5s", `${fmt(state.lossRecentPercent, 1)} %`);
-    setText("diagRate", `${rate.toFixed(1)} Hz`);
+    setText("eventStats", `${state.events.length} eventos`);
 
     // Integridad CRC16
     const totalCrc = (state.stats.received || 0) + (state.stats.invalid || 0);
     const crcPct = totalCrc > 0 ? (100 - ((state.stats.invalid || 0) / totalCrc) * 100) : 100;
+
+    // Actualización de tarjeta principal: Enlace RF & Hardware (Top Right)
+    setText("rfSeq", state.lastSeq !== null ? state.lastSeq.toLocaleString("es-AR") : "---");
+    setText("rfRate", `${rate.toFixed(1)} Hz`);
+    setText("rfLoss", `${fmt(state.lossRecentPercent, 1)} %`);
+    setText("rfLossVal", `${fmt(state.lossRecentPercent, 1)}%`);
+    setText("rfRssi", state.rssi !== null ? `${state.rssi} dBm` : "N/D");
+    setText("rfTempImu", state.tempImu !== null ? `${fmt(state.tempImu, 1)} °C` : "--- °C");
+    setText("rfCrc", `${crcPct.toFixed(1)} %`);
+
+    const rfLossEl = $("rfLoss");
+    if (rfLossEl) {
+        if (state.lossRecentPercent > 15) rfLossEl.style.color = "var(--bad)";
+        else if (state.lossRecentPercent > 5) rfLossEl.style.color = "var(--warn)";
+        else rfLossEl.style.color = "var(--ink)";
+    }
+
+    const rfBadgeEl = $("rfHealthBadge");
+    if (rfBadgeEl) {
+        const silenceSec = state.lastPacketAt ? (now - state.lastPacketAt) / 1000 : 999;
+        if (!state.connected || silenceSec > 3.0) {
+            rfBadgeEl.textContent = "DESCONECTADO";
+            rfBadgeEl.className = "trend-pill crit";
+        } else if (silenceSec > 1.0) {
+            rfBadgeEl.textContent = "SILENCIO";
+            rfBadgeEl.className = "trend-pill warn";
+        } else if (state.lossRecentPercent > 5) {
+            rfBadgeEl.textContent = "PÉRDIDA";
+            rfBadgeEl.className = "trend-pill warn";
+        } else if (state.rssi !== null && state.rssi < -85) {
+            rfBadgeEl.textContent = "BAJA SEÑAL";
+            rfBadgeEl.className = "trend-pill yellow";
+        } else {
+            rfBadgeEl.textContent = "ENLACE OK";
+            rfBadgeEl.className = "trend-pill reached";
+        }
+    }
+
+    // Actualización de modal de Diagnóstico detallado
+    setText("diagRxAfterP0", state.rxAfterP0.toLocaleString("es-AR"));
+    setText("diagSeq", state.lastSeq !== null ? state.lastSeq.toLocaleString("es-AR") : "---");
+    setText("diagLoss5s", `${fmt(state.lossRecentPercent, 1)} %`);
+    setText("diagRate", `${rate.toFixed(1)} Hz`);
     const crcEl = $("diagCrc");
     if (crcEl) {
         crcEl.textContent = `${crcPct.toFixed(1)} %`;
         crcEl.style.color = (state.stats.invalid || 0) > 0 ? "var(--warn)" : "var(--ok)";
     }
 
-    // Color condicional en la pérdida de los últimos 5s
+    // Color condicional en la pérdida de los últimos 5s (modal)
     const lossEl = $("diagLoss5s");
     if (lossEl) {
         if (state.lossRecentPercent > 15) lossEl.style.color = "var(--bad)";
@@ -2136,6 +2354,86 @@ async function loadHistory() {
     );
 }
 
+/* ---------- cinta de salud de conexión (Health Connection Ribbon) ---------- */
+
+function resizeHealthRibbon() {
+    const canvas = $("healthRibbonCanvas");
+    if (!canvas || !canvas.parentElement) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width > 0 && Math.round(canvas.width) !== Math.round(rect.width)) {
+        canvas.width = Math.round(rect.width);
+    }
+}
+
+function drawHealthRibbon() {
+    const canvas = $("healthRibbonCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const now = Date.now();
+    const silenceSec = state.lastPacketAt ? (now - state.lastPacketAt) / 1000 : 999;
+    const isLive = state.connected && state.lastPacketAt !== null && silenceSec <= 1.0;
+
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const emptyColor = isDark ? "rgba(30, 41, 59, 0.45)" : "rgba(203, 213, 225, 0.55)";
+
+    const slots = state.healthSlots;
+    const total = slots.length; // 100 bloques
+    const gap = 1;
+    const blockW = Math.max(1.5, (w - (total - 1) * gap) / total);
+
+    for (let i = 0; i < total; i++) {
+        const s = slots[i];
+        const x = i * (blockW + gap);
+        if (s === 0) {
+            ctx.fillStyle = emptyColor;
+            ctx.fillRect(x, 4, blockW, h - 8);
+            continue;
+        }
+        if (s === 1) ctx.fillStyle = "#10b981";      // Verde: Todo OK
+        else if (s === 2) ctx.fillStyle = "#eab308"; // Amarillo: Baja señal
+        else if (s === 3) ctx.fillStyle = "#f59e0b"; // Ámbar: Pérdida de paquetes
+        else if (s === 4) ctx.fillStyle = "#ef4444"; // Rojo: Desconectado / Silencio
+        else ctx.fillStyle = emptyColor;
+
+        ctx.fillRect(x, 2, blockW, h - 4);
+    }
+
+    // Cartel flotante central si no hay telemetría activa o hay silencio prolongado
+    if (!isLive) {
+        const isBad = !state.connected || silenceSec > 3.0;
+        let bannerMsg = "SIN TELEMETRÍA";
+        if (!state.connected) {
+            bannerMsg = "ENLACE DESCONECTADO";
+        } else {
+            bannerMsg = `SILENCIO RF (${silenceSec.toFixed(1)}s)`;
+        }
+        ctx.font = "900 10px 'JetBrains Mono', Consolas, monospace";
+        const textWidth = ctx.measureText(bannerMsg).width;
+        const pillW = textWidth + 14;
+        const pillH = 18;
+        const pillX = (w - pillW) / 2;
+        const pillY = (h - pillH) / 2;
+
+        ctx.fillStyle = isDark ? "rgba(15, 23, 42, 0.92)" : "rgba(255, 255, 255, 0.92)";
+        ctx.strokeStyle = isBad ? "#ef4444" : "#f59e0b";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(pillX, pillY, pillW, pillH, 3);
+        else ctx.rect(pillX, pillY, pillW, pillH);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = isBad ? "#ef4444" : "#d97706";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(bannerMsg, w / 2, h / 2);
+    }
+}
+
 /* ---------- bucle: requestAnimationFrame (frecuencia de la pantalla) ----------
    cinta y gráficos: cada cuadro · números: ~30 Hz · mapa/logs: 4 Hz · cabecera: 2 Hz */
 
@@ -2143,6 +2441,7 @@ let lastText = 0, lastSlow = 0, lastHeader = 0;
 function loop(now) {
     drawTape(now);
     renderCharts();
+    drawHealthRibbon();
     if (now - lastText >= 33) { lastText = now; renderText(); }
     if (now - lastSlow >= 250) { lastSlow = now; updateMap(); renderLogs(); }
     if (now - lastHeader >= 200) { lastHeader = now; renderHeader(); }
@@ -2182,6 +2481,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     initMap();
     initScaleSelector();
     initDiagnosticsDrawer();
+    resizeHealthRibbon();
+    window.addEventListener("resize", resizeHealthRibbon);
     await loadHistory();
     loadStatus();
     connect();
