@@ -10,6 +10,15 @@ websocket:
 storage:
   database: "data/telemetry.db"
   csv: "data/telemetry.csv"
+  database_enabled: true       # Master switch for SQLite database persistence
+  csv_enabled: true            # Master switch for CSV file logging
+  disable_db_in_demo: true     # Automatically suppress SQLite writes in demo mode (RPi SD card protection)
+  disable_csv_in_demo: true    # Automatically suppress CSV writes in demo mode
+
+demo:
+  enabled: false               # If true, runs built-in synthetic telemetry generator at 10 Hz
+  save_to_db: false            # Keep false to prevent flash wear on Raspberry Pi SD card during simulations
+  save_to_csv: false           # Keep false to avoid disk writes in demo mode
 
 gonogo:
   altitude_tol_m: 5.0

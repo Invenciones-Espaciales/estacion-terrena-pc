@@ -941,14 +941,17 @@ if (document.readyState === "loading") {
                     serial_port: "SIMULADOR_DEMO (10 Hz)",
                     baudrate: 115200,
                     connected: true,
-                    database_active: true,
-                    csv_active: true,
+                    database_active: false,
+                    csv_active: false,
+                    database_saving_enabled: false,
+                    csv_saving_enabled: false,
+                    sd_protection_active: true,
                     disk_free_pct: 78.4,
                     disk_free_mb: 42500.0,
                     min_required_mb_1h: 50.0,
                     disk_go_1h: true,
-                    storage_db: "demo_memory.db",
-                    storage_csv: "demo_telemetry.csv",
+                    storage_db: "DESACTIVADO (Protección SD)",
+                    storage_csv: "DESACTIVADO (Protección SD)",
                     server_time: `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
                 },
                 gonogo: DEMO_CONFIG.gonogo,
@@ -1202,6 +1205,9 @@ if (document.readyState === "loading") {
             <div class="demo-hud-header">
                 <span class="demo-hud-badge" title="Simulador de telemetría en vivo">
                     🚀 DEMO <span id="demoHudPhase" style="opacity:0.9; font-weight:800;"></span>
+                </span>
+                <span class="demo-hud-sd-badge" title="Grabación en base de datos desactivada para proteger la vida útil de la tarjeta SD en la Raspberry Pi">
+                    💾 SD PROTEGIDA (BD OFF)
                 </span>
                 <button type="button" class="demo-hud-btn play-btn" id="demoBtnPlay" title="Pausar / Reanudar simulación">⏸</button>
                 <span class="demo-hud-time" id="demoHudTime">${demoEngine.simTimeSec.toFixed(1)}s / 290s</span>

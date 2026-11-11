@@ -6,11 +6,13 @@ validation, persistence, and WebSocket broadcasting.
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import csv
 import datetime
 import json
 import logging
+import os
 import shutil
 import sqlite3
 import struct
@@ -165,6 +167,17 @@ class WebSocketConfig:
 class StorageConfig:
     database: str
     csv: str
+    database_enabled: bool = True
+    csv_enabled: bool = True
+    disable_db_in_demo: bool = True
+    disable_csv_in_demo: bool = True
+
+
+@dataclass
+class DemoConfig:
+    enabled: bool = False
+    save_to_db: bool = False
+    save_to_csv: bool = False
 
 
 @dataclass
@@ -221,6 +234,7 @@ class AppConfig:
     storage: StorageConfig
     gonogo: GoNoGoConfig = field(default_factory=GoNoGoConfig)
     charts: ChartsConfig = field(default_factory=ChartsConfig)
+    demo: DemoConfig = field(default_factory=DemoConfig)
 
 
 # ============================================================
@@ -295,6 +309,17 @@ def load_app_config() -> AppConfig:
     storage_config = StorageConfig(
         database=str(storage_data.get("database", str(DATA_DIR / "telemetry.db"))),
         csv=str(storage_data.get("csv", str(DATA_DIR / "telemetry.csv"))),
+        database_enabled=bool(storage_data.get("database_enabled", True)),
+        csv_enabled=bool(storage_data.get("csv_enabled", True)),
+        disable_db_in_demo=bool(storage_data.get("disable_db_in_demo", True)),
+        disable_csv_in_demo=bool(storage_data.get("disable_csv_in_demo", True)),
+    )
+
+    demo_data = data.get("demo", {})
+    demo_config = DemoConfig(
+        enabled=bool(demo_data.get("enabled", False)),
+        save_to_db=bool(demo_data.get("save_to_db", False)),
+        save_to_csv=bool(demo_data.get("save_to_csv", False)),
     )
 
     gonogo_data = data.get("gonogo", {})
@@ -356,6 +381,7 @@ def load_app_config() -> AppConfig:
         storage=storage_config,
         gonogo=gonogo_config,
         charts=charts_config,
+        demo=demo_config,
     )
 
 
@@ -1098,6 +1124,52 @@ class RuntimeState:
     last_raw_frame: Optional[str] = None
     last_crc_value: Optional[str] = None
     history: deque = field(default_factory=lambda: deque(maxlen=3600))
+    audit_logs: deque[dict[str, Any]] = field(default_factory=lambda: deque(maxlen=500))
+    demo_mode: bool = False
+    save_db_override: Optional[bool] = None
+    save_csv_override: Optional[bool] = None
+    active_serial_port: Optional[str] = None
+
+
+# ============================================================
+# PERSISTENCE & HARDWARE WEAR PROTECTION
+# ============================================================
+
+def is_database_saving_enabled() -> bool:
+    """Evaluate whether saving to SQLite is active.
+
+    Protects the Raspberry Pi SD card flash memory from wear:
+    1. Overridden if explicitly set by CLI flag or API toggle.
+    2. Disabled if storage.database_enabled is False.
+    3. Disabled if demo_mode is active and demo.save_to_db is False (or disable_db_in_demo is True).
+    """
+    if runtime.save_db_override is False:
+        return False
+    if runtime.save_db_override is True:
+        return True
+    if app_config is None or not app_config.storage.database_enabled:
+        return False
+    if runtime.demo_mode:
+        if app_config.storage.disable_db_in_demo or not app_config.demo.save_to_db:
+            return False
+    return True
+
+
+def is_csv_saving_enabled() -> bool:
+    """Evaluate whether saving to CSV log files is active.
+
+    Suppresses unnecessary SD card write operations during demo or testing runs.
+    """
+    if runtime.save_csv_override is False:
+        return False
+    if runtime.save_csv_override is True:
+        return True
+    if app_config is None or not app_config.storage.csv_enabled:
+        return False
+    if runtime.demo_mode:
+        if app_config.storage.disable_csv_in_demo or not app_config.demo.save_to_csv:
+            return False
+    return True
 
 
 # ============================================================
@@ -1140,12 +1212,24 @@ def create_background_task(coroutine) -> asyncio.Task:
 # ============================================================
 
 async def process_frame(frame: dict[str, Any], raw_frame: Optional[bytes] = None):
-    if statistics is None or database is None or csv_logger is None:
+    if statistics is None:
         return
 
     statistics.register(frame)
-    database.insert(frame, frame_config.sequence_field if frame_config else None)
-    csv_logger.write(frame)
+
+    # Persist to SQLite only when database saving is active (avoids RPi SD card wear in demo)
+    if database is not None and is_database_saving_enabled():
+        try:
+            database.insert(frame, frame_config.sequence_field if frame_config else None)
+        except Exception:
+            logger.exception("Error saving telemetry frame to SQLite database")
+
+    # Persist to CSV only when CSV logging is active
+    if csv_logger is not None and is_csv_saving_enabled():
+        try:
+            csv_logger.write(frame)
+        except Exception:
+            logger.exception("Error writing telemetry frame to CSV log")
 
     runtime.last_frame = frame
     runtime.last_timestamp = time.time()
@@ -1275,6 +1359,188 @@ def resolve_serial_port(configured_port: str) -> str:
         return configured_port
 
 
+async def demo_telemetry_loop():
+    """Generates synthetic 290-second flight kinematics at 10 Hz in RAM without serial hardware or disk I/O."""
+    runtime.connected = True
+    runtime.active_serial_port = "SIMULADOR_DEMO (10 Hz)"
+    logger.info("Demo telemetry loop started @ 10 Hz (pure RAM generation, SD card writes disabled)")
+    await websocket_manager.broadcast({"type": "connection", "connected": True})
+
+    CYCLE_DURATION_S = 290.0
+    BASE_LAT = -34.6037
+    BASE_LON = -58.3816
+    BASE_PRESS = 1013.25
+    t = 125.0
+    seq = 100
+    boot_time = time.time() - 125.0
+
+    while True:
+        try:
+            now_ms = int((time.time() - boot_time) * 1000) & 0xFFFFFFFF
+            t_mod = t % CYCLE_DURATION_S
+
+            if t_mod < 150.0:
+                status = 0
+            elif t_mod < 154.0:
+                status = 1
+            elif t_mod < 176.0:
+                status = 2
+            elif t_mod < 178.0:
+                status = 4
+            elif t_mod < 180.0:
+                status = 8
+            elif t_mod < 206.0:
+                status = 16
+            elif t_mod < 208.0:
+                status = 32
+            elif t_mod < 226.0:
+                status = 64
+            else:
+                status = 128
+
+            if t_mod < 150.0:
+                alt = 0.0
+                vz = 0.0
+                az = 1.0
+                ax = 0.01
+                ay = -0.01
+                gx = 0.1
+                gy = -0.1
+                gz = 0.05
+                speed = 0.0
+                pin_frenado = 0
+                pin_principal = 0
+            elif t_mod < 154.0:
+                tau = t_mod - 150.0
+                az = 4.5
+                vz = 45.0 * tau
+                alt = 0.5 * 45.0 * (tau ** 2)
+                ax = 0.1
+                ay = -0.05
+                gx = 0.5
+                gy = -0.3
+                gz = 15.0
+                speed = vz * 0.1
+                pin_frenado = 0
+                pin_principal = 0
+            elif t_mod < 176.0:
+                tau = t_mod - 154.0
+                az = -1.0
+                vz = max(0.0, 180.0 - 8.18 * tau)
+                alt = min(1500.0, 360.0 + 180.0 * tau - 0.5 * 8.18 * (tau ** 2))
+                ax = 0.02
+                ay = -0.02
+                gx = 0.2
+                gy = -0.1
+                gz = 5.0
+                speed = 12.0
+                pin_frenado = 0
+                pin_principal = 0
+            elif t_mod < 206.0:
+                tau = t_mod - 176.0
+                az = 1.0
+                vz = -25.0
+                alt = max(400.0, 1500.0 - 36.6 * tau)
+                ax = 0.05
+                ay = 0.02
+                gx = 0.4
+                gy = -0.2
+                gz = 2.0
+                speed = 8.5
+                pin_frenado = 1
+                pin_principal = 0
+            elif t_mod < 226.0:
+                tau = t_mod - 206.0
+                az = 1.0
+                vz = -5.0
+                alt = max(0.0, 400.0 - 20.0 * tau)
+                ax = 0.01
+                ay = 0.01
+                gx = 0.1
+                gy = -0.1
+                gz = 1.0
+                speed = 3.5
+                pin_frenado = 1
+                pin_principal = 1
+            else:
+                alt = 0.0
+                vz = 0.0
+                az = 1.0
+                ax = 0.0
+                ay = 0.0
+                gx = 0.0
+                gy = 0.0
+                gz = 0.0
+                speed = 0.0
+                pin_frenado = 1
+                pin_principal = 1
+
+            press = round(BASE_PRESS - (alt / 8.3), 2)
+            lat = BASE_LAT + (alt * 0.0000008)
+            lon = BASE_LON + (alt * 0.0000012)
+
+            frame = {
+                "sync": 0xAA,
+                "frame_number": seq,
+                "timestamp": now_ms,
+                "status": status,
+                "pressure": press,
+                "altura_actual": round(alt, 2),
+                "accel_x": round(ax, 2),
+                "accel_y": round(ay, 2),
+                "accel_z": round(az, 2),
+                "gyro_x": round(gx, 2),
+                "gyro_y": round(gy, 2),
+                "gyro_z": round(gz, 2),
+                "temp_imu": 28.5,
+                "latitude": round(lat, 6),
+                "longitude": round(lon, 6),
+                "altitud_gps": round(alt + 45.0, 1),
+                "satellites": 12,
+                "ground_speed": round(speed, 1),
+                "pin_frenado": pin_frenado,
+                "pin_principal": pin_principal,
+            }
+
+            if frame_config is not None:
+                for fc in frame_config.fields:
+                    if fc.values and fc.name in frame:
+                        val = frame[fc.name]
+                        frame[f"{fc.name}_label"] = fc.values.get(val, str(val))
+
+            raw_payload = struct.pack(
+                "<B H I B f f f f f f f f f f f f B f B B",
+                0xAA,
+                seq,
+                now_ms,
+                status,
+                press,
+                alt,
+                ax, ay, az,
+                gx, gy, gz,
+                28.5,
+                lat, lon, alt + 45.0,
+                12,
+                speed,
+                pin_frenado,
+                pin_principal,
+            )
+            crc_val = crc16_ccitt(raw_payload)
+            raw_pkt = raw_payload + crc_val.to_bytes(2, byteorder="little")
+
+            await process_frame(frame, raw_pkt)
+
+            seq = (seq + 1) & 0xFFFF
+            t += 0.1
+            await asyncio.sleep(0.1)
+        except asyncio.CancelledError:
+            logger.info("Demo telemetry loop cancelled")
+            break
+        except Exception:
+            logger.exception("Error in demo telemetry loop")
+            await asyncio.sleep(0.1)
+
+
 async def serial_loop():
     while True:
         if app_config is None:
@@ -1283,6 +1549,7 @@ async def serial_loop():
 
         transport = None
         target_port = resolve_serial_port(app_config.serial.port)
+        runtime.active_serial_port = target_port
         try:
             logger.info(
                 "Connecting UART to %s @ %d baud (configured: %s)",
@@ -1526,20 +1793,32 @@ async def history(seconds: float = 60.0, limit: int = 1200):
 
 @app.get("/api/status")
 async def status():
+    db_active = database is not None and is_database_saving_enabled()
+    csv_active = csv_logger is not None and is_csv_saving_enabled()
+    port_str = (
+        "SIMULADOR_DEMO (10 Hz)"
+        if runtime.demo_mode
+        else (runtime.active_serial_port or (app_config.serial.port if app_config is not None else None))
+    )
     return {
         "connected": runtime.connected,
+        "demo_mode": runtime.demo_mode,
         "frames_received": runtime.frames_received,
         "last_timestamp": runtime.last_timestamp,
-        "serial_port": app_config.serial.port if app_config is not None else None,
+        "serial_port": port_str,
         "baudrate": app_config.serial.baudrate if app_config is not None else None,
         "statistics": statistics.snapshot() if statistics else {},
         "station": (
             lambda du: {
-                "serial_port": app_config.serial.port if app_config is not None else None,
+                "serial_port": port_str,
                 "baudrate": app_config.serial.baudrate if app_config is not None else None,
                 "connected": runtime.connected,
-                "database_active": database is not None,
-                "csv_active": csv_logger is not None,
+                "demo_mode": runtime.demo_mode,
+                "database_active": db_active,
+                "csv_active": csv_active,
+                "database_saving_enabled": is_database_saving_enabled(),
+                "csv_saving_enabled": is_csv_saving_enabled(),
+                "sd_protection_active": not is_database_saving_enabled(),
                 "disk_free_pct": round(du.free / du.total * 100, 1),
                 "disk_free_mb": round(du.free / (1024 * 1024), 1),
                 "min_required_mb_1h": 50.0,
@@ -1680,9 +1959,18 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.get("/api/gonogo/logs")
 async def get_gonogo_logs(limit: int = 100):
-    if database is None:
-        return {"logs": []}
-    logs = database.get_gonogo_audit_logs(limit=min(limit, 500))
+    logs = []
+    if database is not None and is_database_saving_enabled():
+        try:
+            logs = database.get_gonogo_audit_logs(limit=min(limit, 500))
+        except Exception:
+            logger.exception("Error reading Go/No-Go audit logs from database")
+
+    # If database persistence is disabled or empty, return from in-memory ring-buffer
+    if not logs and runtime.audit_logs:
+        logs = list(runtime.audit_logs)[-limit:]
+        logs.reverse()
+
     return {"logs": logs}
 
 
@@ -1700,19 +1988,39 @@ async def log_gonogo_event(request: Request):
     operator = body.get("operator", "OPERATOR")
     details = body.get("details")
 
-    if database is None:
-        return JSONResponse({"status": "error", "message": "Database not initialized"}, status_code=500)
+    entry = None
+    if database is not None and is_database_saving_enabled():
+        try:
+            entry = database.insert_gonogo_audit(
+                action=action,
+                item_id=item_id,
+                item_label=item_label,
+                state=state_val,
+                operator=operator,
+                details=details,
+            )
+        except Exception:
+            logger.exception("Error writing Go/No-Go audit log to database")
 
-    entry = database.insert_gonogo_audit(
-        action=action,
-        item_id=item_id,
-        item_label=item_label,
-        state=state_val,
-        operator=operator,
-        details=details,
-    )
+    # If database is disabled (e.g. in demo mode for SD card wear prevention), handle in memory
+    if entry is None:
+        ts = time.time()
+        iso = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc).isoformat()
+        entry = {
+            "id": len(runtime.audit_logs) + 1,
+            "timestamp": ts,
+            "iso_time": iso,
+            "action": action,
+            "item_id": item_id,
+            "item_label": item_label,
+            "state": state_val,
+            "operator": operator,
+            "details": details,
+        }
 
-    if gonogo_csv_logger is not None:
+    runtime.audit_logs.append(entry)
+
+    if gonogo_csv_logger is not None and is_csv_saving_enabled():
         try:
             gonogo_csv_logger.write(entry)
         except Exception:
@@ -1725,6 +2033,30 @@ async def log_gonogo_event(request: Request):
     })
 
     return {"status": "ok", "entry": entry}
+
+
+@app.post("/api/storage/toggle")
+async def toggle_storage(request: Request):
+    """Dynamically toggle database and CSV persistence to protect RPi SD card from wear."""
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    if "database_enabled" in body:
+        runtime.save_db_override = bool(body["database_enabled"])
+    if "csv_enabled" in body:
+        runtime.save_csv_override = bool(body["csv_enabled"])
+    if "demo_mode" in body:
+        runtime.demo_mode = bool(body["demo_mode"])
+
+    return {
+        "status": "ok",
+        "demo_mode": runtime.demo_mode,
+        "database_saving_enabled": is_database_saving_enabled(),
+        "csv_saving_enabled": is_csv_saving_enabled(),
+        "sd_protection_active": not is_database_saving_enabled(),
+    }
 
 
 # ============================================================
@@ -1744,35 +2076,62 @@ async def startup():
     frame_buffer = FrameBuffer(parser)
     statistics = PacketStatistics(frame_config.sequence_field)
 
-    # Initialize persistence
-    database = Database(app_config.storage.database)
-    csv_logger = CSVLogger(
-        app_config.storage.csv,
-        [
-            out_name
-            for ff in frame_config.fields
-            for out_name in ([ff.name, f"{ff.name}_label"] if ff.values else [ff.name])
-        ],
-    )
-    gonogo_csv_path = Path(app_config.storage.csv).parent / "gonogo_audit.csv"
-    gonogo_csv_logger = GoNoGoCSVLogger(str(gonogo_csv_path))
+    # Detect demo mode from config or environment variables if not already set by CLI
+    if app_config.demo.enabled or os.environ.get("GS_DEMO_MODE") in ("1", "true", "TRUE"):
+        runtime.demo_mode = True
+    if os.environ.get("GS_NO_DB") in ("1", "true", "TRUE"):
+        runtime.save_db_override = False
+    if os.environ.get("GS_NO_CSV") in ("1", "true", "TRUE"):
+        runtime.save_csv_override = False
 
-    logger.info("Database: %s", database.path)
-    logger.info("CSV Log: %s", csv_logger.path)
-    logger.info("Go/No-Go Audit CSV Log: %s", gonogo_csv_logger.path)
+    # Initialize SQLite database only when saving is enabled
+    if is_database_saving_enabled():
+        database = Database(app_config.storage.database)
+        logger.info("Database: %s (active)", database.path)
+        # Pre-hydrate recent history from SQLite only in live telemetry mode
+        if not runtime.demo_mode:
+            try:
+                recent_frames = database.get_recent(seconds=120.0, limit=1200)
+                for rf in recent_frames:
+                    runtime.history.append(rf)
+                if recent_frames:
+                    logger.info("Pre-loaded history from SQLite: %d frames", len(recent_frames))
+            except Exception:
+                logger.exception("Error pre-loading history from SQLite")
+    else:
+        database = None
+        logger.info(
+            "SQLite database persistence INACTIVE (RPi SD card protection: demo=%s, db_enabled=%s)",
+            runtime.demo_mode,
+            app_config.storage.database_enabled,
+        )
 
-    # Pre-hydrate recent history from SQLite
-    try:
-        recent_frames = database.get_recent(seconds=120.0, limit=1200)
-        for rf in recent_frames:
-            runtime.history.append(rf)
-        if recent_frames:
-            logger.info("Pre-loaded history from SQLite: %d frames", len(recent_frames))
-    except Exception:
-        logger.exception("Error pre-loading history from SQLite")
+    # Initialize CSV logger only when CSV saving is enabled
+    if is_csv_saving_enabled():
+        csv_logger = CSVLogger(
+            app_config.storage.csv,
+            [
+                out_name
+                for ff in frame_config.fields
+                for out_name in ([ff.name, f"{ff.name}_label"] if ff.values else [ff.name])
+            ],
+        )
+        gonogo_csv_path = Path(app_config.storage.csv).parent / "gonogo_audit.csv"
+        gonogo_csv_logger = GoNoGoCSVLogger(str(gonogo_csv_path))
+        logger.info("CSV Log: %s (active)", csv_logger.path)
+        logger.info("Go/No-Go Audit CSV Log: %s (active)", gonogo_csv_logger.path)
+    else:
+        csv_logger = None
+        gonogo_csv_logger = None
+        logger.info("CSV logging INACTIVE (RPi SD card protection: zero disk write mode)")
 
-    # Start serial background acquisition
-    create_background_task(serial_loop())
+    # Start telemetry source: synthetic feeder in demo mode, UART serial loop in hardware mode
+    if runtime.demo_mode:
+        logger.info("Starting background demo telemetry feeder @ 10 Hz (pure RAM, zero SD writes)")
+        create_background_task(demo_telemetry_loop())
+    else:
+        create_background_task(serial_loop())
+
     logger.info("Ground Station initialized successfully")
 
 
@@ -1812,14 +2171,72 @@ async def shutdown():
 
 
 # ============================================================
-# APPLICATION ENTRYPOINT
+# APPLICATION ENTRYPOINT & CLI PARSER
 # ============================================================
 
+def parse_cli_args(args: Optional[list[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Rocket Telemetry Ground Station Core Service",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--demo", "-d",
+        action="store_true",
+        help="Run in demo/simulation mode with synthetic 10 Hz telemetry (SD card protection: DB saving off)",
+    )
+    parser.add_argument(
+        "--no-db",
+        action="store_true",
+        help="Disable SQLite database persistence (protects Raspberry Pi SD card flash memory)",
+    )
+    parser.add_argument(
+        "--no-csv",
+        action="store_true",
+        help="Disable CSV file logging (protects Raspberry Pi SD card flash memory)",
+    )
+    parser.add_argument(
+        "--no-storage",
+        action="store_true",
+        help="Disable all disk persistence (pure RAM-only operation for maximum SD card longevity)",
+    )
+    parser.add_argument(
+        "--save-db-in-demo",
+        action="store_true",
+        help="Force saving telemetry to SQLite database even in demo mode (default: disabled)",
+    )
+    parser.add_argument(
+        "--host",
+        type=str,
+        default=None,
+        help="Custom host interface to bind (overrides app.yaml)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="Custom port to bind (overrides app.yaml)",
+    )
+    return parser.parse_args(args)
+
+
 if __name__ == "__main__":
+    cli = parse_cli_args()
+    if cli.demo:
+        runtime.demo_mode = True
+    if cli.no_db or cli.no_storage:
+        runtime.save_db_override = False
+    elif cli.save_db_in_demo:
+        runtime.save_db_override = True
+    if cli.no_csv or cli.no_storage:
+        runtime.save_csv_override = False
+
     startup_config = load_app_config()
+    bind_host = cli.host or startup_config.websocket.host
+    bind_port = cli.port or startup_config.websocket.port
+
     uvicorn.run(
         app,
-        host=startup_config.websocket.host,
-        port=startup_config.websocket.port,
+        host=bind_host,
+        port=bind_port,
         log_level="info",
     )
