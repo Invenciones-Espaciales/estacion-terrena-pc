@@ -361,11 +361,9 @@ header.global-header {
     border-color: var(--bad);
 }
 
-/* Data Freezing (>300ms) Visual Degradation */
+/* Data Freezing indicators (legacy .stale-dim removed to preserve full readability) */
 .stale-dim {
-    opacity: 0.5 !important;
-    filter: grayscale(0.5);
-    transition: opacity 0.15s ease;
+    /* Intentionally empty - dimming effect disabled to keep cockpit high-contrast */
 }
 
 .card-frozen-badge {

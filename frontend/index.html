@@ -267,14 +267,14 @@ canvas { display: block; }
     background: var(--soft);
     border: 1px solid var(--soft-border);
     border-radius: 6px;
-    padding: 5px 8px;
+    padding: 6px 8px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
 }
 .rf-ribbon-canvas {
     width: 100%;
-    height: 24px;
+    height: 28px;
     display: block;
     border-radius: 3px;
     background: rgba(15, 23, 42, 0.04);
@@ -317,41 +317,6 @@ html[data-theme="dark"] .trend-pill.yellow {
     color: #facc15;
     border-color: rgba(250, 204, 21, 0.45);
     background: rgba(250, 204, 21, 0.12);
-}
-
-.rf-metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
-}
-.rf-cell {
-    background: var(--soft);
-    border: 1px solid var(--soft-border);
-    border-radius: 4px;
-    padding: 3.5px 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-}
-.rf-cell .lbl {
-    font-size: 8.5px;
-    font-weight: 800;
-    color: var(--muted);
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.rf-cell .val {
-    font-size: 13px;
-    font-weight: 900;
-    color: var(--ink);
-    font-family: "JetBrains Mono", Consolas, monospace;
-    line-height: 1.1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 /* ===== MAPA & NAVEGACIÓN ===== */
@@ -738,7 +703,6 @@ html[data-theme="dark"] .trend-pill.yellow {
             <div class="card grow flight-panel-card">
                 <div class="card-title">
                     <span>DINÁMICA DE VUELO</span>
-                    <span class="card-frozen-badge" id="badgeFrozenAlt">CONGELADO</span>
                 </div>
 
                 <!-- Altitud Hero Box -->
@@ -824,49 +788,21 @@ html[data-theme="dark"] .trend-pill.yellow {
 
         <!-- ==================== ZONA 4: COLUMNA DERECHA (30% × 81%) ==================== -->
         <section class="panel">
-            <!-- 1. PANEL SUPERIOR DERECHO: ENLACE RF & HARDWARE CON CINTA DE SALUD -->
+            <!-- 1. PANEL SUPERIOR DERECHO: ENLACE RF CON CINTA DE SALUD -->
             <div class="card rf-panel-card">
                 <div class="card-title">
-                    <span>ENLACE RF &amp; HARDWARE</span>
+                    <span>ENLACE RF &amp; CONECTIVIDAD</span>
                     <span class="trend-pill" id="rfHealthBadge">DESCONECTADO</span>
                 </div>
 
                 <!-- Cinta Gráfica de Salud de Conexión (Health Ribbon) -->
                 <div class="rf-ribbon-wrap">
-                    <canvas id="healthRibbonCanvas" width="340" height="24" class="rf-ribbon-canvas"></canvas>
+                    <canvas id="healthRibbonCanvas" width="340" height="28" class="rf-ribbon-canvas"></canvas>
                     <div class="rf-ribbon-legend">
                         <span><i class="dot-sm ok"></i>OK</span>
                         <span><i class="dot-sm yellow"></i>Baja señal</span>
                         <span><i class="dot-sm warn"></i>Pérdida (<b id="rfLossVal" class="num">0.0%</b>)</span>
                         <span><i class="dot-sm bad"></i>Desconectado</span>
-                    </div>
-                </div>
-
-                <!-- Métricas Críticas de RF & Hardware -->
-                <div class="rf-metrics-grid">
-                    <div class="rf-cell">
-                        <span class="lbl">SECUENCIA</span>
-                        <span class="val num" id="rfSeq">---</span>
-                    </div>
-                    <div class="rf-cell">
-                        <span class="lbl">TASA RX</span>
-                        <span class="val num" id="rfRate">0.0 Hz</span>
-                    </div>
-                    <div class="rf-cell">
-                        <span class="lbl">PÉRDIDA 5s</span>
-                        <span class="val num" id="rfLoss">0.0 %</span>
-                    </div>
-                    <div class="rf-cell">
-                        <span class="lbl">RSSI RF</span>
-                        <span class="val num" id="rfRssi">N/D</span>
-                    </div>
-                    <div class="rf-cell">
-                        <span class="lbl">TEMP. IMU</span>
-                        <span class="val num" id="rfTempImu">--- °C</span>
-                    </div>
-                    <div class="rf-cell">
-                        <span class="lbl">CRC16</span>
-                        <span class="val num" id="rfCrc">100%</span>
                     </div>
                 </div>
             </div>
@@ -1784,16 +1720,6 @@ function updateMap() {
 
 function renderText() {            // ~10 Hz
     const now = Date.now();
-    const silenceMs = state.lastPacketAt !== null ? (now - state.lastPacketAt) : 0;
-    const isFrozen = state.connected && state.lastPacketAt !== null && silenceMs > 300;
-
-    // Degradación visual por pérdida de paquetes (>300ms de silencio)
-    const dashboardEl = document.querySelector(".dashboard");
-    if (dashboardEl) {
-        dashboardEl.classList.toggle("stale-dim", isFrozen);
-    }
-    const b = $("badgeFrozenAlt");
-    if (b) b.classList.toggle("active", isFrozen);
 
     // 1. Dinámica de Vuelo Primaria (Cockpit Principal)
     if (state.altitude !== null) {
@@ -2026,21 +1952,8 @@ function renderLogs() {            // ~4 Hz
     const totalCrc = (state.stats.received || 0) + (state.stats.invalid || 0);
     const crcPct = totalCrc > 0 ? (100 - ((state.stats.invalid || 0) / totalCrc) * 100) : 100;
 
-    // Actualización de tarjeta principal: Enlace RF & Hardware (Top Right)
-    setText("rfSeq", state.lastSeq !== null ? state.lastSeq.toLocaleString("es-AR") : "---");
-    setText("rfRate", `${rate.toFixed(1)} Hz`);
-    setText("rfLoss", `${fmt(state.lossRecentPercent, 1)} %`);
+    // Actualización de leyenda en la cinta de salud RF
     setText("rfLossVal", `${fmt(state.lossRecentPercent, 1)}%`);
-    setText("rfRssi", state.rssi !== null ? `${state.rssi} dBm` : "N/D");
-    setText("rfTempImu", state.tempImu !== null ? `${fmt(state.tempImu, 1)} °C` : "--- °C");
-    setText("rfCrc", `${crcPct.toFixed(1)} %`);
-
-    const rfLossEl = $("rfLoss");
-    if (rfLossEl) {
-        if (state.lossRecentPercent > 15) rfLossEl.style.color = "var(--bad)";
-        else if (state.lossRecentPercent > 5) rfLossEl.style.color = "var(--warn)";
-        else rfLossEl.style.color = "var(--ink)";
-    }
 
     const rfBadgeEl = $("rfHealthBadge");
     if (rfBadgeEl) {
