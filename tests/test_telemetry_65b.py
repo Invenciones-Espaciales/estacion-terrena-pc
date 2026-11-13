@@ -229,24 +229,42 @@ def run_test_storage():
         db.insert(parsed, sequence_field="frame_number")
         csv_log.write(parsed)
 
+        # Verify db.get_recent() reconstructs packet dictionary from flat columns
+        recent = db.get_recent(seconds=60.0, limit=10)
+        assert len(recent) == 1
+        assert recent[0]["sequence"] == 50
+        assert recent[0]["data"]["frame_number"] == 50
+        assert recent[0]["data"]["pressure"] == 1013.25
+        assert recent[0]["data"]["pin_frenado_label"] == "DESACTIVADO"
+
         db.close()
         csv_log.close()
 
-        # Verify DB content
+        # Verify DB flat relational schema & content
         import sqlite3
         conn = sqlite3.connect(db_path)
         cur = conn.cursor()
-        cur.execute("SELECT sequence, payload FROM telemetry")
+        cur.execute(
+            """
+            SELECT received_at, sync, frame_number, timestamp, status, status_label,
+                   pressure, altura_actual, accel_x, accel_y, accel_z,
+                   gyro_x, gyro_y, gyro_z, temp_imu,
+                   latitude, longitude, altitud_gps, satellites, ground_speed,
+                   pin_frenado, pin_frenado_label, pin_principal, pin_principal_label
+            FROM telemetry
+            """
+        )
         row = cur.fetchone()
         assert row is not None
-        assert row[0] == 50
-        import json
-        payload_data = json.loads(row[1])
-        assert payload_data["frame_number"] == 50
-        assert payload_data["pressure"] == 1013.25
-        assert "altura_actual" in payload_data
-        assert "gyro_x" in payload_data
-        assert "pin_frenado" in payload_data
+        assert row[0] > 0  # received_at
+        assert row[1] == 0xAA  # sync
+        assert row[2] == 50  # frame_number
+        assert row[3] == 5000  # timestamp
+        assert row[6] == 1013.25  # pressure
+        assert row[20] == 0  # pin_frenado
+        assert row[21] == "DESACTIVADO"  # pin_frenado_label
+        assert row[22] == 0  # pin_principal
+        assert row[23] == "DESACTIVADO"  # pin_principal_label
         conn.close()
 
         # Verify CSV content

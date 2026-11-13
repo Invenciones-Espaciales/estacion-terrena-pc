@@ -827,6 +827,32 @@ class PacketStatistics:
 # ============================================================
 
 class Database:
+    TELEMETRY_COLUMNS: tuple[str, ...] = (
+        "sync",
+        "frame_number",
+        "timestamp",
+        "status",
+        "status_label",
+        "pressure",
+        "altura_actual",
+        "accel_x",
+        "accel_y",
+        "accel_z",
+        "gyro_x",
+        "gyro_y",
+        "gyro_z",
+        "temp_imu",
+        "latitude",
+        "longitude",
+        "altitud_gps",
+        "satellites",
+        "ground_speed",
+        "pin_frenado",
+        "pin_frenado_label",
+        "pin_principal",
+        "pin_principal_label",
+    )
+
     def __init__(self, path: str):
         self.path = Path(path)
         if not self.path.is_absolute():
@@ -838,20 +864,50 @@ class Database:
         self.connection.execute("PRAGMA synchronous = NORMAL;")
         self.connection.execute("PRAGMA cache_size = -64000;")
         self.connection.execute("PRAGMA temp_store = MEMORY;")
+
+        existing_cols = {
+            row[1]
+            for row in self.connection.execute("PRAGMA table_info(telemetry);").fetchall()
+        }
+        if existing_cols and ("payload" in existing_cols or "received_at" not in existing_cols):
+            self.connection.execute("DROP INDEX IF EXISTS idx_telemetry_timestamp;")
+            self.connection.execute("DROP TABLE IF EXISTS telemetry;")
+
         self.connection.execute(
             """
             CREATE TABLE IF NOT EXISTS telemetry (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp REAL NOT NULL,
-                sequence INTEGER,
-                payload TEXT NOT NULL
+                received_at REAL NOT NULL,
+                sync INTEGER,
+                frame_number INTEGER,
+                timestamp INTEGER,
+                status INTEGER,
+                status_label TEXT,
+                pressure REAL,
+                altura_actual REAL,
+                accel_x REAL,
+                accel_y REAL,
+                accel_z REAL,
+                gyro_x REAL,
+                gyro_y REAL,
+                gyro_z REAL,
+                temp_imu REAL,
+                latitude REAL,
+                longitude REAL,
+                altitud_gps REAL,
+                satellites INTEGER,
+                ground_speed REAL,
+                pin_frenado INTEGER,
+                pin_frenado_label TEXT,
+                pin_principal INTEGER,
+                pin_principal_label TEXT
             )
             """
         )
         self.connection.execute(
             """
-            CREATE INDEX IF NOT EXISTS idx_telemetry_timestamp
-            ON telemetry(timestamp)
+            CREATE INDEX IF NOT EXISTS idx_telemetry_received_at
+            ON telemetry(received_at)
             """
         )
         self.connection.execute(
@@ -877,14 +933,13 @@ class Database:
         )
         self.connection.commit()
 
-    def insert(self, data: dict[str, Any], sequence_field: Optional[str]):
-        sequence = data.get(sequence_field) if sequence_field else None
+    def insert(self, data: dict[str, Any], sequence_field: Optional[str] = None):
+        cols_sql = ", ".join(("received_at", *self.TELEMETRY_COLUMNS))
+        placeholders = ", ".join(["?"] * (1 + len(self.TELEMETRY_COLUMNS)))
+        values = (time.time(), *(data.get(col) for col in self.TELEMETRY_COLUMNS))
         self.connection.execute(
-            """
-            INSERT INTO telemetry (timestamp, sequence, payload)
-            VALUES (?, ?, ?)
-            """,
-            (time.time(), sequence, json.dumps(data, ensure_ascii=False)),
+            f"INSERT INTO telemetry ({cols_sql}) VALUES ({placeholders})",
+            values,
         )
         self.connection.commit()
 
@@ -958,19 +1013,17 @@ class Database:
             logger.exception("Error querying Go/No-Go audit logs from SQLite")
             return []
 
-    def close(self):
-        self.connection.close()
-
     def get_recent(self, seconds: float = 60.0, limit: int = 1200) -> list[dict[str, Any]]:
         try:
             cursor = self.connection.cursor()
             min_ts = time.time() - max(1.0, seconds)
+            cols_sql = ", ".join(("received_at", *self.TELEMETRY_COLUMNS))
             cursor.execute(
-                """
-                SELECT timestamp, sequence, payload
+                f"""
+                SELECT {cols_sql}
                 FROM telemetry
-                WHERE timestamp >= ?
-                ORDER BY timestamp ASC
+                WHERE received_at >= ?
+                ORDER BY received_at ASC
                 LIMIT ?
                 """,
                 (min_ts, limit),
@@ -978,8 +1031,8 @@ class Database:
             rows = cursor.fetchall()
             if not rows:
                 cursor.execute(
-                    """
-                    SELECT timestamp, sequence, payload
+                    f"""
+                    SELECT {cols_sql}
                     FROM telemetry
                     ORDER BY id DESC
                     LIMIT ?
@@ -989,18 +1042,19 @@ class Database:
                 rows = list(reversed(cursor.fetchall()))
 
             results = []
-            for ts, seq, payload in rows:
-                try:
-                    payload_data = json.loads(payload)
-                    results.append({
-                        "timestamp": ts,
-                        "sequence": seq,
-                        "data": payload_data,
-                        "raw_hex": None,
-                        "crc_value": None,
-                    })
-                except Exception:
-                    continue
+            for row in rows:
+                payload_data = {
+                    col: val
+                    for col, val in zip(self.TELEMETRY_COLUMNS, row[1:])
+                    if val is not None or not col.endswith("_label")
+                }
+                results.append({
+                    "timestamp": row[0],
+                    "sequence": payload_data.get("frame_number"),
+                    "data": payload_data,
+                    "raw_hex": None,
+                    "crc_value": None,
+                })
             return results
         except Exception:
             logger.exception("Error querying history from SQLite")
@@ -1023,13 +1077,13 @@ class CSVLogger:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.fields = fields
         self.file = self.path.open("a", newline="", encoding="utf-8")
-        self.writer = csv.DictWriter(self.file, fieldnames=["timestamp", *self.fields])
+        self.writer = csv.DictWriter(self.file, fieldnames=["received_at", *self.fields])
         if self.path.stat().st_size == 0:
             self.writer.writeheader()
             self.file.flush()
 
     def write(self, data: dict[str, Any]):
-        row = {"timestamp": time.time(), **{f: data.get(f) for f in self.fields}}
+        row = {"received_at": time.time(), **{f: data.get(f) for f in self.fields}}
         self.writer.writerow(row)
         self.file.flush()
 
