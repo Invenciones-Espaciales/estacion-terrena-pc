@@ -1113,7 +1113,6 @@ html[data-theme="dark"] .trend-pill.yellow {
         height: 240px !important;
         min-height: 240px !important;
     }
-    }
 
     .chart-box {
         position: relative !important;
@@ -1441,7 +1440,7 @@ html[data-theme="dark"] .trend-pill.yellow {
         <div class="card" id="alertsCard">
             <div class="card-title">
                 <span>ALERTAS OPERACIONALES</span>
-                <span class="hint" id="alertStats">NOMINAL</span>
+                <span class="hint" id="alertStats">SIN DATOS</span>
             </div>
             <div class="scroll" id="alertBox"></div>
         </div>
@@ -2799,7 +2798,10 @@ function renderLogs() {            // ~4 Hz
         const alertBoxEl = $("alertBox");
         if (alertBoxEl) alertBoxEl.innerHTML = alertsHtml;
     }
-    setText("alertStats", alerts.some(a => a.badge === "crit") ? "CRÍTICO" : (alerts.some(a => a.badge === "warn") ? "AVISO" : "NOMINAL"));
+    const alertStatusText = (!state.connected || state.lastPacketAt === null)
+        ? "SIN DATOS"
+        : (alerts.some(a => a.badge === "crit") ? "CRÍTICO" : (alerts.some(a => a.badge === "warn") ? "AVISO" : "NOMINAL"));
+    setText("alertStats", alertStatusText);
 }
 
 function renderCharts() {          // 10 Hz
