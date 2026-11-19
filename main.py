@@ -1601,12 +1601,12 @@ async def demo_telemetry_loop():
             now_ms = int((time.time() - boot_time) * 1000) & 0xFFFFFFFF
             t_mod = t % CYCLE_DURATION_S
 
-            # Reference norms (OpenRocket / Altus Metrum H/I-class ~1500m, ~15g):
-            # 3.0s burn (150-153s), 16.0s coast (153-169s) to 1500m apogee,
+            # Reference norms (H/I-class high-power rocket ~1500m apogee, 15g peak):
+            # 2.2s burn (150.0-152.2s), 16.8s coast (152.2-169.0s) to 1500m apogee,
             # 30.0s drogue (169-199s), 40.0s main chute + soft landing (199-239s).
             if t_mod < 150.0:
                 status = 0
-            elif t_mod < 153.0:
+            elif t_mod < 152.2:
                 status = 1
             elif t_mod < 169.0:
                 status = 2
@@ -1635,18 +1635,18 @@ async def demo_telemetry_loop():
                 speed = 0.0
                 pin_frenado = 0
                 pin_principal = 0
-            elif t_mod < 153.0:
+            elif t_mod < 152.2:
                 tau = t_mod - 150.0
-                # Fast ignition spike to 15.0g, ~1.2s thrust plateau, then taper to ~8.0g before abrupt burnout
-                if tau < 0.4:
-                    az = 1.0 + 14.0 * (tau / 0.4)
-                elif tau < 1.6:
-                    az = 15.0 - 1.5 * ((tau - 0.4) / 1.2)
+                # 2.2s high-thrust burn: fast rise to 15.0g, ~1.0s plateau, taper to 8.0g before burnout
+                if tau < 0.35:
+                    az = 1.0 + 14.0 * (tau / 0.35)
+                elif tau < 1.35:
+                    az = 15.0 - 1.5 * ((tau - 0.35) / 1.0)
                 else:
-                    az = 13.5 - 5.5 * ((tau - 1.6) / 1.4)
-                # Consistent kinematics: a_net ~ 58.3 m/s^2 avg -> burnout vz ~ 175.0 m/s, alt ~ 262.5 m
-                vz = 58.33 * tau
-                alt = 0.5 * 58.33 * (tau ** 2)
+                    az = 13.5 - 5.5 * ((tau - 1.35) / 0.85)
+                # Continuous kinematics: avg net accel ~ 11.2g -> burnout vz = 171.5 m/s, alt = 188.6 m
+                vz = 77.95 * tau
+                alt = 0.5 * 77.95 * (tau ** 2)
                 ax = 0.15
                 ay = -0.08
                 gx = 0.6
@@ -1656,12 +1656,12 @@ async def demo_telemetry_loop():
                 pin_frenado = 0
                 pin_principal = 0
             elif t_mod < 169.0:
-                tau = t_mod - 153.0
-                norm = tau / 16.0
-                # Abrupt burnout drop to -1.8g drag+gravity, decaying smoothly toward 0g at apogee
+                tau = t_mod - 152.2
+                norm = tau / 16.8
+                # Abrupt burnout drop to -1.8g drag+gravity, relaxing toward 0g at apogee (1500m)
                 az = -1.8 * ((1.0 - norm) ** 1.35)
-                vz = max(0.0, 154.7 * (1.0 - norm))
-                alt = 262.5 + (1500.0 - 262.5) * (1.0 - (1.0 - norm) ** 2)
+                vz = max(0.0, 156.1 * (1.0 - norm))
+                alt = 188.6 + (1500.0 - 188.6) * (1.0 - (1.0 - norm) ** 2)
                 ax = 0.02
                 ay = -0.02
                 gx = 0.2

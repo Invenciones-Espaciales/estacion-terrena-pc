@@ -6,23 +6,23 @@ def eval_demo_kinematics(t_mod: float):
     """Mirror of demo_telemetry_loop kinematics in main.py for deterministic verification."""
     if t_mod < 150.0:
         return 0.0, 0.0, 1.0
-    elif t_mod < 153.0:
+    elif t_mod < 152.2:
         tau = t_mod - 150.0
-        if tau < 0.4:
-            az = 1.0 + 14.0 * (tau / 0.4)
-        elif tau < 1.6:
-            az = 15.0 - 1.5 * ((tau - 0.4) / 1.2)
+        if tau < 0.35:
+            az = 1.0 + 14.0 * (tau / 0.35)
+        elif tau < 1.35:
+            az = 15.0 - 1.5 * ((tau - 0.35) / 1.0)
         else:
-            az = 13.5 - 5.5 * ((tau - 1.6) / 1.4)
-        vz = 58.33 * tau
-        alt = 0.5 * 58.33 * (tau ** 2)
+            az = 13.5 - 5.5 * ((tau - 1.35) / 0.85)
+        vz = 77.95 * tau
+        alt = 0.5 * 77.95 * (tau ** 2)
         return alt, vz, az
     elif t_mod < 169.0:
-        tau = t_mod - 153.0
-        norm = tau / 16.0
+        tau = t_mod - 152.2
+        norm = tau / 16.8
         az = -1.8 * ((1.0 - norm) ** 1.35)
-        vz = max(0.0, 154.7 * (1.0 - norm))
-        alt = 262.5 + (1500.0 - 262.5) * (1.0 - (1.0 - norm) ** 2)
+        vz = max(0.0, 156.1 * (1.0 - norm))
+        alt = 188.6 + (1500.0 - 188.6) * (1.0 - (1.0 - norm) ** 2)
         return alt, vz, az
     elif t_mod < 199.0:
         tau = t_mod - 169.0
