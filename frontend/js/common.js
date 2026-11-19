@@ -1299,35 +1299,31 @@ if (document.readyState === "loading") {
 
         const hud = document.createElement("div");
         hud.id = "demoControlHud";
-        hud.className = "demo-hud";
+        hud.className = "demo-hud minimized";
+        demoEngine.minimized = true;
         hud.innerHTML = `
-            <div class="demo-hud-header">
-                <span class="demo-hud-badge" title="Simulador de telemetría en vivo">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <div class="demo-hud-header" title="Simulador DEMO · SD Protegida (BD OFF)">
+                <span class="demo-hud-badge" title="Simulador de telemetría en vivo · SD Protegida">
                     DEMO <span id="demoHudPhase" style="opacity:0.85; font-weight:700;"></span>
-                </span>
-                <span class="demo-hud-sd-badge" title="Grabación en base de datos desactivada para proteger la vida útil de la tarjeta SD en la Raspberry Pi">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    SD PROTEGIDA · BD OFF
                 </span>
                 <button type="button" class="demo-hud-btn play-btn" id="demoBtnPlay" title="Pausar / Reanudar simulación">${pauseSvg}</button>
                 <span class="demo-hud-time" id="demoHudTime">${demoEngine.simTimeSec.toFixed(1)}s / 290s</span>
                 <div class="demo-hud-header-actions">
                     <button type="button" class="demo-hud-btn" id="demoBtnSpeed" title="Velocidad de reproducción">1x</button>
-                    <button type="button" class="demo-hud-btn min-btn" id="demoBtnMin" title="Minimizar / Expandir control demo">${chevDownSvg}</button>
+                    <button type="button" class="demo-hud-btn min-btn" id="demoBtnMin" title="Expandir barra de control">${expandSvg}</button>
                 </div>
             </div>
-            <div class="demo-hud-body" id="demoHudBody">
+            <div class="demo-hud-body" id="demoHudBody" style="display:none;">
                 <div class="demo-hud-slider-wrap">
                     <input type="range" class="demo-hud-slider" id="demoHudSlider" min="0" max="290" step="0.5" value="${demoEngine.simTimeSec.toFixed(1)}" title="Línea de tiempo (0s - 290s)">
                 </div>
                 <div class="demo-hud-presets">
-                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="0" data-start="0" data-end="60" title="Inicio / Boot y calibración GPS (0s)">Inicio (0s)</button>
-                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="125" data-start="60" data-end="150" title="Rampa Estabilizada">Rampa GO</button>
-                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="152" data-start="150" data-end="176" title="Despegue (T-3s)">Despegue</button>
-                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="176" data-start="176" data-end="206" title="Apogeo y Drogue">Apogeo</button>
-                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="206" data-start="206" data-end="226" title="Paracaídas Principal">Main Chute</button>
-                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="227" data-start="226" data-end="291" title="Aterrizaje">Aterrizaje</button>
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="0" data-start="0" data-end="60" title="Inicio (0s)">0</button>
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="125" data-start="60" data-end="150" title="Rampa GO">Rampa</button>
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="151" data-start="150" data-end="169" title="Despegue (T0)">T0</button>
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="169" data-start="169" data-end="199" title="Apogeo y Drogue">Apo</button>
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="199" data-start="199" data-end="239" title="Paracaídas Principal">Main</button>
+                    <button type="button" class="demo-hud-btn demo-preset-btn" data-time="240" data-start="239" data-end="291" title="Aterrizaje">Tierra</button>
                 </div>
             </div>
         `;

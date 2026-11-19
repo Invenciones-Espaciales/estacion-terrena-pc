@@ -1601,21 +1601,24 @@ async def demo_telemetry_loop():
             now_ms = int((time.time() - boot_time) * 1000) & 0xFFFFFFFF
             t_mod = t % CYCLE_DURATION_S
 
+            # Reference norms (OpenRocket / Altus Metrum H/I-class ~1500m, ~15g):
+            # 3.0s burn (150-153s), 16.0s coast (153-169s) to 1500m apogee,
+            # 30.0s drogue (169-199s), 40.0s main chute + soft landing (199-239s).
             if t_mod < 150.0:
                 status = 0
-            elif t_mod < 154.0:
+            elif t_mod < 153.0:
                 status = 1
-            elif t_mod < 176.0:
+            elif t_mod < 169.0:
                 status = 2
-            elif t_mod < 178.0:
+            elif t_mod < 171.0:
                 status = 4
-            elif t_mod < 180.0:
+            elif t_mod < 173.0:
                 status = 8
-            elif t_mod < 206.0:
+            elif t_mod < 199.0:
                 status = 16
-            elif t_mod < 208.0:
+            elif t_mod < 201.0:
                 status = 32
-            elif t_mod < 246.0:
+            elif t_mod < 239.0:
                 status = 64
             else:
                 status = 128
@@ -1632,12 +1635,18 @@ async def demo_telemetry_loop():
                 speed = 0.0
                 pin_frenado = 0
                 pin_principal = 0
-            elif t_mod < 154.0:
+            elif t_mod < 153.0:
                 tau = t_mod - 150.0
-                # Realistic solid-motor thrust curve peaking at 15.0g near liftoff
-                az = 1.0 + 14.0 * math.sin(math.pi * ((tau / 4.0) ** 0.65))
-                vz = 28.85 * tau
-                alt = 0.5 * 28.85 * (tau ** 2)
+                # Fast ignition spike to 15.0g, ~1.2s thrust plateau, then taper to ~8.0g before abrupt burnout
+                if tau < 0.4:
+                    az = 1.0 + 14.0 * (tau / 0.4)
+                elif tau < 1.6:
+                    az = 15.0 - 1.5 * ((tau - 0.4) / 1.2)
+                else:
+                    az = 13.5 - 5.5 * ((tau - 1.6) / 1.4)
+                # Consistent kinematics: a_net ~ 58.3 m/s^2 avg -> burnout vz ~ 175.0 m/s, alt ~ 262.5 m
+                vz = 58.33 * tau
+                alt = 0.5 * 58.33 * (tau ** 2)
                 ax = 0.15
                 ay = -0.08
                 gx = 0.6
@@ -1646,13 +1655,13 @@ async def demo_telemetry_loop():
                 speed = vz * 0.1
                 pin_frenado = 0
                 pin_principal = 0
-            elif t_mod < 176.0:
-                tau = t_mod - 154.0
-                norm = tau / 22.0
-                # Aerodynamic drag deceleration dipping to -1.8g after burnout, relaxing toward 0g at apogee
-                az = -1.8 * ((1.0 - norm) ** 1.4)
-                vz = max(0.0, 115.4 * (1.0 - norm))
-                alt = 230.8 + (1500.0 - 230.8) * (1.0 - (1.0 - norm) ** 2)
+            elif t_mod < 169.0:
+                tau = t_mod - 153.0
+                norm = tau / 16.0
+                # Abrupt burnout drop to -1.8g drag+gravity, decaying smoothly toward 0g at apogee
+                az = -1.8 * ((1.0 - norm) ** 1.35)
+                vz = max(0.0, 154.7 * (1.0 - norm))
+                alt = 262.5 + (1500.0 - 262.5) * (1.0 - (1.0 - norm) ** 2)
                 ax = 0.02
                 ay = -0.02
                 gx = 0.2
@@ -1661,10 +1670,10 @@ async def demo_telemetry_loop():
                 speed = 12.0
                 pin_frenado = 0
                 pin_principal = 0
-            elif t_mod < 206.0:
-                tau = t_mod - 176.0
-                # Brief drogue opening shock (~3.8g), then steady 1.0g drogue descent to 220m
-                az = (1.0 + 2.8 * math.sin(math.pi * (tau / 1.2))) if tau < 1.2 else 1.0
+            elif t_mod < 199.0:
+                tau = t_mod - 169.0
+                # Brief drogue opening shock (~3.5g), then steady 1.0g drogue descent to 220m
+                az = (1.0 + 2.5 * math.sin(math.pi * (tau / 1.0))) if tau < 1.0 else 1.0
                 vz = -42.7
                 alt = max(220.0, 1500.0 - (1280.0 / 30.0) * tau)
                 ax = 0.05
@@ -1675,12 +1684,12 @@ async def demo_telemetry_loop():
                 speed = 8.5
                 pin_frenado = 1
                 pin_principal = 0
-            elif t_mod < 246.0:
-                tau = t_mod - 206.0
+            elif t_mod < 239.0:
+                tau = t_mod - 199.0
                 norm = min(1.0, tau / 40.0)
-                # Brief main chute opening shock (~2.6g), steady 1.0g descent, gentle 1.6g soft touchdown
-                if tau < 1.5:
-                    az = 1.0 + 1.6 * math.sin(math.pi * (tau / 1.5))
+                # Brief main chute opening shock (~2.4g), steady 1.0g descent, gentle 1.6g soft touchdown
+                if tau < 1.2:
+                    az = 1.0 + 1.4 * math.sin(math.pi * (tau / 1.2))
                 elif tau >= 39.4:
                     az = 1.0 + 0.6 * math.sin(math.pi * ((tau - 39.4) / 0.6))
                 else:

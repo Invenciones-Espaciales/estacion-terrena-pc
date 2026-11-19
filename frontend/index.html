@@ -447,15 +447,11 @@ canvas { display: block; }
 .g-one-point {
     position: absolute;
     left: 16.667%;
-    top: 50%;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #f59e0b;
-    border: 1.5px solid var(--card);
-    transform: translate(-50%, -50%);
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #d97706;
     z-index: 4;
-    box-shadow: 0 0 4px rgba(245, 158, 11, 0.85);
     pointer-events: none;
 }
 .g-bar-scale {
@@ -1055,39 +1051,62 @@ html[data-theme="dark"] .trend-pill.yellow {
         flex: none !important;
     }
 
-    .alt-hero-box {
-        padding: 8px 12px !important;
+    .dyn-section {
+        flex: none !important;
+        min-height: auto !important;
+        padding: 10px 2px !important;
+        gap: 8px !important;
     }
 
-    .alt-hero-box .num.big {
-        font-size: 40px !important;
+    .dyn-hero-row {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+
+    .dyn-hero-val .big {
+        font-size: clamp(34px, 10.5vw, 46px) !important;
     }
 
     .flight-metrics-grid {
         display: flex !important;
         flex-direction: column !important;
-        gap: 6px !important;
+        flex: none !important;
+        gap: 2px !important;
     }
 
-    .flight-pair-row {
-        gap: 6px !important;
-        border-bottom: none !important;
+    .spacex-timeline-wrap {
+        flex: none !important;
+        padding: 6px 0 !important;
     }
 
-    .flight-metrics-grid .flight-cell {
-        border: 1px solid var(--soft-border) !important;
-        background: var(--soft) !important;
-        border-radius: 2px !important;
-        padding: 6px 8px !important;
+    .spacex-timeline {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 10px 4px !important;
     }
 
-    .flight-cell-wide {
-        grid-column: 1 / -1 !important;
+    .spx-track {
+        display: none !important;
+    }
+
+    .gps-coords-bar {
+        grid-template-columns: 1fr !important;
+        gap: 4px !important;
+    }
+
+    .gps-coord-cell {
+        grid-column: span 1 !important;
+        border-right: none !important;
+        justify-content: space-between !important;
+    }
+
+    .rf-metrics-row {
+        gap: 4px !important;
     }
 
     .chart-card {
         flex: none !important;
         height: auto !important;
+        min-height: 200px !important;
     }
 
     .chart-box {
@@ -1280,10 +1299,10 @@ html[data-theme="dark"] .trend-pill.yellow {
                 <div class="chart-box"><canvas id="chAlt"></canvas></div>
             </div>
 
-            <!-- 2. GRÁFICO INFERIOR: CARGA G (−2g A +16g) -->
+            <!-- 2. GRÁFICO INFERIOR: CARGA G (−2 a +16 g) -->
             <div class="card chart-card" style="flex: 1 1 0;">
                 <div class="card-title">
-                    <span>CARGA G (−2g A +16g)</span>
+                    <span>CARGA G <span style="text-transform:none;">(−2 a +16 g)</span></span>
                 </div>
                 <div class="chart-box"><canvas id="chVel"></canvas></div>
             </div>
@@ -1902,14 +1921,12 @@ function ingest(message, isHistory = false) {
     const ax = Number(d.accel_x), ay = Number(d.accel_y), az = Number(d.accel_z);
     if ([ax, ay, az].every(Number.isFinite)) {
         state.ax = ax; state.ay = ay; state.az = az;
-        const gMag = Math.hypot(ax, ay, az);
-        const gSigned = az < 0 ? -gMag : gMag;
-        state.gTotal = gSigned;
-        state.maxTotalG = Math.max(state.maxTotalG || 0, gMag);
+        state.gTotal = az;
+        state.maxTotalG = Math.max(state.maxTotalG || 0, Math.abs(az));
         pushHist("ax", ts, ax);
         pushHist("ay", ts, ay);
         pushHist("az", ts, az);
-        pushHist("gTotal", ts, gSigned);
+        pushHist("gTotal", ts, az);
 
         // Actualización de marcas Dual Peak (Boost vs Parachute Shock)
         const frameStatusText = d.status_label ?? (Number.isFinite(Number(d.status)) ? STATUS_LABELS[Number(d.status)] : null) ?? state.statusText ?? "";
@@ -2359,7 +2376,7 @@ function renderText() {            // ~10 Hz
     }
     if (state.gTotal !== null) {
         const gTotal = state.gTotal;
-        setText("gTotalVal", fmtSigned(gTotal, 2));
+        setText("gTotalVal", fmt(gTotal, 2));
         const gBarFill = $("gBarFill");
         const gBarNeg = $("gBarNeg");
         const absG = Math.abs(gTotal);
