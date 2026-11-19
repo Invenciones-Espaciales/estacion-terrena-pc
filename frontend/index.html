@@ -1254,9 +1254,9 @@ html[data-theme="dark"] .trend-pill.yellow {
                     <!-- Sección 3: Carga en G + Medidor −2g a +16g con punto en 1g -->
                     <div class="dyn-section">
                         <div class="dyn-hero-row">
-                            <div class="dyn-hero-lbl" style="gap: 4px;">
-                                <span>CARGA EN G</span>
-                                <span class="trend-pill" id="gmeterStatus" style="width: fit-content;">NOMINAL</span>
+                            <div class="dyn-hero-lbl">
+                                <span>CARGA</span>
+                                <span>EN G</span>
                             </div>
                             <div class="dyn-hero-val">
                                 <span class="num big" id="gTotalVal">---</span>
@@ -2385,7 +2385,6 @@ function renderText() {            // ~10 Hz
         setText("gTotalVal", fmt(gTotal, 2));
         const gBarFill = $("gBarFill");
         const gBarNeg = $("gBarNeg");
-        const absG = Math.abs(gTotal);
         if (gBarFill) {
             const posPct = gTotal > 0 ? Math.min(gTotal, 16) / 18 * 100 : 0;
             gBarFill.style.width = `${posPct.toFixed(2)}%`;
@@ -2395,22 +2394,6 @@ function renderText() {            // ~10 Hz
         if (gBarNeg) {
             const negPct = gTotal < 0 ? Math.min(-gTotal, 2) / 18 * 100 : 0;
             gBarNeg.style.width = `${negPct.toFixed(2)}%`;
-        }
-        const gmeterStatus = $("gmeterStatus");
-        if (gmeterStatus) {
-            if (gTotal >= 14) {
-                gmeterStatus.textContent = "ALTO G";
-                gmeterStatus.className = "trend-pill crit";
-            } else if (gTotal >= 10) {
-                gmeterStatus.textContent = "CARGA ELEVADA";
-                gmeterStatus.className = "trend-pill warn";
-            } else if (gTotal < -0.2) {
-                gmeterStatus.textContent = "FRENADO AERO";
-                gmeterStatus.className = "trend-pill warn";
-            } else {
-                gmeterStatus.textContent = absG < 0.2 ? "CAÍDA LIBRE" : "NOMINAL";
-                gmeterStatus.className = "trend-pill";
-            }
         }
     }
 
