@@ -21,19 +21,19 @@ html, body {
     overflow: hidden;
     background: var(--bg);
     color: var(--ink);
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: var(--font-sans);
 }
 
-.num { font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
 
-/* ===== APP: CABECERA / 5 ZONAS FIJAS SIN SCROLL (NASA-STD-3001) ===== */
+/* ===== APP: CABECERA / 5 ZONAS FIJAS SIN SCROLL ===== */
 
 .app {
     height: 100vh;
-    padding: 6px 10px;
+    padding: 6px 8px;
     display: grid;
-    grid-template-rows: 42px minmax(0, 81fr) minmax(0, 13fr);
-    gap: 8px;
+    grid-template-rows: 46px minmax(0, 1fr) 112px;
+    gap: 6px;
     box-sizing: border-box;
     overflow: hidden;
 }
@@ -44,29 +44,31 @@ html, body {
     min-height: 0;
     display: grid;
     grid-template-columns: 26fr 44fr 30fr;
-    gap: 8px;
+    gap: 6px;
 }
 
-.panel { min-height: 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.panel { min-height: 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 
 .card {
     border: 1px solid var(--border);
     background: var(--card);
-    border-radius: 6px;
+    border-radius: 2px;
     padding: 8px 10px;
     min-height: 0;
     min-width: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .card.grow { flex: 1 1 0; }
 
 .card-title {
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 800;
-    letter-spacing: .06em;
+    letter-spacing: .05em;
+    color: var(--ink);
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--soft-border);
     margin-bottom: 6px;
     display: flex;
     justify-content: space-between;
@@ -75,129 +77,330 @@ html, body {
     flex: none;
     text-transform: uppercase;
 }
-.card-title .hint { font-size: 10.5px; font-weight: 800; color: var(--muted); letter-spacing: 0; text-align: right; }
+.card-title .hint { font-size: 12px; font-weight: 700; font-family: var(--font-mono); color: var(--gray); letter-spacing: .02em; text-align: right; }
 
-.row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; padding: 3px 0; border-bottom: 1px solid var(--soft-border); }
+.row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; padding: 3px 0; border-bottom: 1px solid var(--soft-border); }
 .row:last-of-type { border-bottom: none; }
-.row .k { font-weight: 800; color: var(--gray); }
-.row .v { font-weight: 950; font-size: 18px; }
+.row .k { font-size: 11.5px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .04em; }
+.row .v { font-weight: 800; font-size: 16.5px; font-family: var(--font-mono); }
 
 canvas { display: block; }
 
-/* ===== ALTITUD & DINÁMICA DE VUELO ===== */
+/* ===== ALTITUD & DINÁMICA DE VUELO (HIGH-DENSITY FLIGHT DECK) ===== */
 .flight-panel-card {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
 }
 
-.alt-hero-box {
-    background: var(--soft);
-    border: 1px solid var(--soft-border);
-    border-radius: 6px;
-    padding: 10px 14px;
-    flex: 0 0 auto;
+.dyn-hero-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0;
+    min-width: 0;
 }
-.alt-hero-lbl {
-    font-size: 10px;
+.dyn-hero-lbl {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: clamp(13.5px, 1.15vw, 17px);
     font-weight: 800;
-    color: var(--muted);
-    letter-spacing: .08em;
+    color: var(--gray);
+    letter-spacing: .04em;
     text-transform: uppercase;
-    margin-bottom: 2px;
+    line-height: 1.15;
+    flex-shrink: 0;
 }
-.alt-hero-val {
+.dyn-hero-val {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    justify-content: flex-end;
+    gap: 5px;
+    min-width: 0;
 }
 .big {
-    font-size: 44px;
-    font-weight: 900;
-    line-height: 1;
-    font-family: "JetBrains Mono", Consolas, monospace;
+    font-size: clamp(34px, 3.2vw, 50px);
+    font-weight: 800;
+    line-height: 0.98;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    white-space: nowrap;
 }
-.unit { font-size: 16px; font-weight: 800; color: var(--muted); }
+.unit { font-size: 17px; font-weight: 700; font-family: var(--font-mono); color: var(--gray); flex-shrink: 0; }
+
+/* Center-Zero Bipolar Vertical Speed Indicator (VSI) Bar */
+.vz-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+}
+.vz-bar-track {
+    position: relative;
+    height: 15px;
+    background: var(--soft-border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.bar-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--ink);
+    opacity: 0.22;
+    z-index: 2;
+    pointer-events: none;
+}
+.vz-bar-zero {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--ink);
+    opacity: 0.65;
+    transform: translateX(-50%);
+    z-index: 3;
+}
+.vz-bar-pos {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.1s linear;
+}
+.vz-bar-neg {
+    position: absolute;
+    right: 50%;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    background: var(--warn);
+    transition: width 0.1s linear, background-color 0.2s ease;
+}
+.vz-bar-neg.fast { background: var(--bad); }
+.vz-bar-scale {
+    position: relative;
+    height: 15px;
+    width: 100%;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--gray);
+    font-family: var(--font-mono);
+}
+.vz-bar-scale span,
+.g-bar-scale span {
+    position: absolute;
+    top: 0;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* Full-width GPS Lat/Lon Split Bar */
+.gps-coords-bar {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    border-top: 1px solid var(--soft-border);
+    padding-top: 6px;
+    margin-top: 6px;
+}
+.gps-coord-cell {
+    grid-column: span 6;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 5px;
+    padding: 2px 6px;
+    min-width: 0;
+    white-space: nowrap;
+}
+.gps-coord-cell.left { border-right: 1px solid var(--soft-border); }
+.gps-coord-lbl {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--gray);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.gps-coord-val {
+    font-size: clamp(16.5px, 1.4vw, 20px);
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--ink);
+}
 
 .flight-metrics-grid {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-height: 0;
 }
+.dyn-section {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding: 6px 2px;
+    border-bottom: 1px solid var(--soft-border);
+    min-height: 0;
+}
+.dyn-section:last-child {
+    border-bottom: none;
+}
+.col-12 { grid-column: span 12; }
+.col-6 { grid-column: span 6; }
+
 .flight-cell {
-    background: var(--soft);
-    border: 1px solid var(--soft-border);
-    border-radius: 6px;
-    padding: 9px 12px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--soft-border);
+    border-radius: 0;
+    padding: 6px 2px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 3px;
-    flex: 1 1 0;
-    min-height: 52px;
+    min-height: 50px;
+    min-width: 0;
+}
+.flight-cell.col-6.cell-left {
+    border-right: 1px solid var(--soft-border);
+    padding: 6px 10px 6px 2px;
+}
+.flight-cell.col-6.cell-right {
+    padding: 6px 2px 6px 10px;
+}
+.g-section-bar {
+    grid-column: span 12;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 7px 2px 3px 2px;
+    border-bottom: 1px solid var(--soft-border);
+}
+.g-chart-cell {
+    grid-column: span 12;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 2px 4px 2px;
+    flex: 1 1 auto;
+    min-height: 115px;
+    min-width: 0;
+}
+.vz-state-pill {
+    font-size: clamp(17px, 1.5vw, 22px);
+    font-weight: 800;
+    padding: 5px 12px;
+    border-radius: 2px;
+    background: var(--soft);
+    border: 1px solid var(--soft-border);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    width: fit-content;
+}
+.vz-state-pill.asc {
+    color: var(--accent);
+    border-color: rgba(56, 189, 248, 0.35);
+    background: rgba(56, 189, 248, 0.09);
+}
+.vz-state-pill.desc {
+    color: var(--warn);
+    border-color: rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.10);
 }
 .flight-cell-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 4px;
 }
 .flight-cell .lbl {
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--muted);
-    letter-spacing: .05em;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gray);
+    letter-spacing: .04em;
     text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .trend-pill {
-    font-size: 9.5px;
+    font-size: 11px;
     font-weight: 800;
-    padding: 1.5px 6px;
-    border-radius: 3px;
-    background: var(--card);
+    padding: 2px 7px;
+    border-radius: 2px;
+    background: var(--soft);
     border: 1px solid var(--soft-border);
-    color: var(--muted);
-    font-family: "JetBrains Mono", monospace;
-    letter-spacing: 0.02em;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 .trend-pill.asc {
-    color: var(--accent);
-    border-color: rgba(37, 99, 235, 0.35);
-    background: rgba(37, 99, 235, 0.08);
+    color: #ffffff;
+    border-color: #0284c7;
+    background: #0284c7;
 }
 .trend-pill.desc {
-    color: var(--warn);
-    border-color: rgba(217, 119, 6, 0.35);
-    background: rgba(217, 119, 6, 0.08);
+    color: #ffffff;
+    border-color: #b45309;
+    background: #d97706;
 }
 .trend-pill.reached {
-    color: var(--ok);
-    border-color: rgba(5, 150, 105, 0.35);
-    background: rgba(5, 150, 105, 0.08);
+    color: #ffffff;
+    border-color: #15803d;
+    background: #16a34a;
 }
 .trend-pill.warn {
-    color: var(--warn);
-    border-color: rgba(217, 119, 6, 0.4);
-    background: rgba(217, 119, 6, 0.12);
+    color: #ffffff;
+    border-color: #b45309;
+    background: #d97706;
 }
 .trend-pill.crit {
-    color: var(--bad);
-    border-color: rgba(220, 38, 38, 0.4);
-    background: rgba(220, 38, 38, 0.12);
+    color: #ffffff;
+    border-color: #b91c1c;
+    background: #dc2626;
 }
 
 .flight-cell .val {
-    font-size: 22px;
-    font-weight: 900;
+    font-size: clamp(22px, 1.9vw, 28px);
+    font-weight: 800;
     color: var(--ink);
-    font-family: "JetBrains Mono", Consolas, monospace;
-    line-height: 1.1;
+    font-family: var(--font-mono);
+    line-height: 1.05;
+    white-space: nowrap;
+}
+.gmeter-val-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+.gmeter-sub {
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--gray);
+    white-space: nowrap;
 }
 
 /* Mini G-load Bar */
 .g-bar-wrap {
-    margin-top: 4px;
+    margin-top: 3px;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -205,49 +408,123 @@ canvas { display: block; }
 }
 .g-bar-track {
     position: relative;
-    height: 5px;
+    height: 16px;
     background: var(--soft-border);
-    border-radius: 3px;
+    border-radius: 2px;
     overflow: hidden;
 }
 .g-bar-fill {
-    height: 100%;
-    width: 8.3%;
+    position: absolute;
+    left: 11.111%;
+    top: 0;
+    bottom: 0;
+    width: 5.556%;
     background: var(--accent);
-    border-radius: 3px;
     transition: width 0.1s linear, background-color 0.2s ease;
 }
-.g-bar-fill.warn { background: var(--warn); }
-.g-bar-fill.crit { background: var(--bad); }
+.g-bar-fill.warn { background: #d97706; }
+.g-bar-fill.crit { background: #dc2626; }
+.g-bar-neg {
+    position: absolute;
+    right: 88.889%;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    background: #d97706;
+    transition: width 0.1s linear;
+}
+.g-bar-zero {
+    position: absolute;
+    left: 11.111%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--ink);
+    opacity: 0.7;
+    transform: translateX(-50%);
+    z-index: 3;
+}
+.g-one-point {
+    position: absolute;
+    left: 16.667%;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f59e0b;
+    border: 1.5px solid var(--card);
+    transform: translate(-50%, -50%);
+    z-index: 4;
+    box-shadow: 0 0 4px rgba(245, 158, 11, 0.85);
+    pointer-events: none;
+}
 .g-bar-scale {
+    position: relative;
+    height: 15px;
+    width: 100%;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--gray);
+    font-family: var(--font-mono);
+}
+
+/* 3-Cell Flight Environment & Spin Strip */
+.flight-env-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--soft-border);
+    padding-top: 6px;
+    margin-top: 2px;
+    flex: 0 0 auto;
+}
+.flight-env-cell {
     display: flex;
-    justify-content: space-between;
-    font-size: 8px;
+    flex-direction: column;
+    gap: 1px;
+    padding: 2px 6px;
+    border-right: 1px solid var(--soft-border);
+    min-width: 0;
+}
+.flight-env-cell:first-child { padding-left: 2px; }
+.flight-env-cell:last-child { border-right: none; padding-right: 2px; }
+.flight-env-k {
+    font-size: 10px;
     font-weight: 700;
     color: var(--muted);
-    font-family: "JetBrains Mono", monospace;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.flight-env-v {
+    font-size: 13.5px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--ink);
+    white-space: nowrap;
 }
 
 .btn-diag-toggle {
-    background: var(--card);
+    background: var(--soft);
     border: 1px solid var(--border);
     color: var(--ink);
     padding: 8px 10px;
-    font-size: 11px;
-    font-weight: 800;
+    font-size: 12px;
+    font-weight: 700;
     letter-spacing: 0.05em;
+    text-transform: uppercase;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 2px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s, border-color 0.15s;
-    margin-top: auto;
+    gap: 6px;
+    transition: background 0.12s, border-color 0.12s;
+    margin-top: 6px;
     width: 100%;
     flex: 0 0 auto;
 }
 .btn-diag-toggle:hover {
-    background: var(--soft);
+    background: var(--border-light);
     border-color: var(--accent);
 }
 
@@ -266,30 +543,30 @@ canvas { display: block; }
 .rf-ribbon-wrap {
     background: var(--soft);
     border: 1px solid var(--soft-border);
-    border-radius: 6px;
-    padding: 6px 8px;
+    border-radius: 2px;
+    padding: 5px 8px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
 }
 .rf-ribbon-canvas {
     width: 100%;
-    height: 28px;
+    height: 26px;
     display: block;
-    border-radius: 3px;
+    border-radius: 1px;
     background: rgba(15, 23, 42, 0.04);
 }
 html[data-theme="dark"] .rf-ribbon-canvas {
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(7, 10, 15, 0.65);
 }
 .rf-ribbon-legend {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 9px;
-    font-weight: 800;
-    color: var(--muted);
-    font-family: "JetBrains Mono", Consolas, monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray);
+    font-family: var(--font-mono);
     padding: 0 2px;
 }
 .rf-ribbon-legend span {
@@ -308,50 +585,133 @@ html[data-theme="dark"] .rf-ribbon-canvas {
 .dot-sm.warn { background: #f59e0b; }
 .dot-sm.bad { background: #ef4444; }
 
+.rf-metrics-row {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    border-top: 1px solid var(--soft-border);
+    padding-top: 6px;
+    margin-top: 2px;
+}
+.rf-metric-cell {
+    grid-column: span 6;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+    padding: 4px 6px;
+    white-space: nowrap;
+}
+.rf-metric-cell.cell-left {
+    border-right: 1px solid var(--soft-border);
+}
+.rf-metric-cell.cell-right {
+}
+.rf-metric-lbl {
+    font-size: clamp(14px, 1.2vw, 17px);
+    font-weight: 800;
+    color: var(--gray);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+.rf-metric-val {
+    font-size: clamp(22px, 1.85vw, 28px);
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--ink);
+    line-height: 1.05;
+    white-space: nowrap;
+}
+.rf-metric-unit {
+    font-size: clamp(14px, 1.2vw, 17px);
+    font-weight: 700;
+    color: var(--gray);
+    margin-left: 1px;
+}
+
+/* RSSI Signal Strength Bar in RF Link Card (−120 dBm to −40 dBm) */
+.rf-rssi-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 3px 2px 0 2px;
+}
+.rf-rssi-track {
+    position: relative;
+    height: 11px;
+    background: var(--soft-border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.rf-rssi-fill {
+    height: 100%;
+    width: 0%;
+    background: #16a34a;
+    border-radius: 2px;
+    transition: width 0.2s ease, background-color 0.2s ease;
+}
+.rf-rssi-fill.warn { background: #d97706; }
+.rf-rssi-fill.bad { background: #dc2626; }
+.rf-rssi-scale {
+    position: relative;
+    height: 14px;
+    width: 100%;
+    font-size: 11px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--gray);
+}
+.rf-rssi-scale span {
+    position: absolute;
+    top: 0;
+    line-height: 1;
+    white-space: nowrap;
+}
+
 .trend-pill.yellow {
-    color: #b45309;
-    border-color: rgba(234, 179, 8, 0.45);
-    background: rgba(234, 179, 8, 0.12);
+    color: #ffffff;
+    border-color: #b45309;
+    background: #d97706;
 }
 html[data-theme="dark"] .trend-pill.yellow {
-    color: #facc15;
-    border-color: rgba(250, 204, 21, 0.45);
-    background: rgba(250, 204, 21, 0.12);
+    color: #ffffff;
+    border-color: #b45309;
+    background: #d97706;
 }
 
 /* ===== MAPA & NAVEGACIÓN ===== */
-#gpsMap { flex: 1; min-height: 80px; border: 1px solid var(--soft-border); border-radius: 6px; overflow: hidden; }
+#gpsMap { flex: 1; min-height: 80px; border: 1px solid var(--soft-border); border-radius: 2px; overflow: hidden; }
 .guidance-banner {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: var(--soft);
     border: 1px solid var(--soft-border);
-    padding: 6px 10px;
-    border-radius: 6px;
+    padding: 5px 8px;
+    border-radius: 2px;
     margin-top: 6px;
 }
 .guidance-banner .lbl {
-    font-size: 10.5px;
-    font-weight: 800;
-    color: var(--muted);
-    letter-spacing: 0.04em;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--gray);
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 .guidance-banner .val {
-    font-size: 16px;
-    font-weight: 900;
+    font-size: 17.5px;
+    font-weight: 800;
     color: var(--accent);
-    font-family: "JetBrains Mono", Consolas, monospace;
+    font-family: var(--font-mono);
 }
 .coords-compact {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--soft);
-    border: 1px solid var(--soft-border);
-    padding: 5px 8px;
-    border-radius: 6px;
+    background: transparent;
+    border-top: 1px solid var(--soft-border);
+    padding: 5px 2px 1px 2px;
+    border-radius: 0;
     margin-top: 6px;
 }
 .coord-item {
@@ -360,94 +720,196 @@ html[data-theme="dark"] .trend-pill.yellow {
     gap: 6px;
 }
 .coord-item .lbl {
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--gray);
+    letter-spacing: .04em;
 }
 .coord-item .val {
-    font-size: 13.5px;
-    font-weight: 900;
-    font-family: "JetBrains Mono", Consolas, monospace;
+    font-size: 14.5px;
+    font-weight: 800;
+    font-family: var(--font-mono);
 }
 .sat-badge .val { color: var(--ok); }
-.hint.fix-ok { color: var(--ok); font-weight: 900; }
-.hint.fix-warn { color: var(--warn); font-weight: 900; }
+.hint.fix-ok { color: var(--ok); font-weight: 700; }
+.hint.fix-warn { color: var(--warn); font-weight: 700; }
 
 /* ===== INFERIOR COMPACTO (PIROTECNIA / HITOS / ALERTAS) ===== */
 .bottom {
     min-height: 0;
     display: grid;
-    grid-template-columns: 210px 1.4fr 1.6fr;
-    gap: 8px;
+    grid-template-columns: 225px 1.35fr 1.65fr;
+    gap: 6px;
 }
 .pyro-lamps {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    gap: 4px;
     flex: 1;
 }
 .pyro-lamp {
     background: var(--soft);
     border: 1px solid var(--soft-border);
-    border-radius: 6px;
+    border-radius: 2px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 6px 4px;
+    padding: 5px 4px;
     text-align: center;
-    transition: background 0.2s, border-color 0.2s;
+    transition: background 0.18s, border-color 0.18s;
 }
 .pyro-lamp .name {
-    font-size: 10.5px;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--gray);
 }
 .pyro-lamp .state {
-    font-size: 12px;
-    font-weight: 900;
+    font-size: 13.5px;
+    font-weight: 800;
     margin-top: 2px;
-    font-family: "JetBrains Mono", Consolas, monospace;
+    font-family: var(--font-mono);
 }
 .pyro-lamp.state-idle {
     border-color: var(--soft-border);
-    opacity: 0.85;
+    opacity: 0.92;
 }
-.pyro-lamp.state-idle .state { color: var(--muted); }
+.pyro-lamp.state-idle .state { color: var(--gray); }
 .pyro-lamp.state-active {
-    background: rgba(5, 150, 105, 0.1);
-    border-color: #10b981;
+    background: var(--soft);
+    border-color: var(--soft-border);
 }
-.pyro-lamp.state-active .name { color: #059669; }
-.pyro-lamp.state-active .state { color: #059669; font-weight: 900; }
+.pyro-lamp.state-active .name { color: var(--gray); }
+.pyro-lamp.state-active .state {
+    background: #16a34a;
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-weight: 800;
+}
 .pyro-lamp.state-alert {
-    background: rgba(220, 38, 38, 0.1);
-    border-color: #ef4444;
+    background: var(--soft);
+    border-color: var(--soft-border);
 }
-.pyro-lamp.state-alert .name { color: #dc2626; }
-.pyro-lamp.state-alert .state { color: #dc2626; font-weight: 900; }
+.pyro-lamp.state-alert .name { color: var(--gray); }
+.pyro-lamp.state-alert .state {
+    background: #dc2626;
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-weight: 800;
+}
 
 .scroll { flex: 1; min-height: 0; overflow-y: auto; font-size: 13.5px; }
 .empty { color: var(--muted); font-style: italic; padding: 4px; font-size: 13px; }
-.ev-time { font-weight: 950; width: 95px; flex-shrink: 0; display: inline-block; color: var(--accent); }
-.ev-row { padding: 4px 0; border-bottom: 1px solid var(--soft-border); display: flex; align-items: baseline; gap: 8px; font-weight: 700; }
+.ev-time { font-size: 13px; font-weight: 800; font-family: var(--font-mono); width: 96px; flex-shrink: 0; display: inline-block; color: var(--accent); }
+.ev-row { padding: 3px 0; border-bottom: 1px solid var(--soft-border); display: flex; align-items: baseline; gap: 8px; font-weight: 600; font-size: 13px; }
 .ev-row:last-child { border-bottom: none; }
 
-.al-row { padding: 4px 6px; border-bottom: 1px solid var(--soft-border); display: flex; align-items: center; justify-content: space-between; font-size: 13.5px; }
-.al-badge { font-weight: 950; font-size: 11px; padding: 2px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
-.al-badge.crit { background: var(--bad); color: #fff; }
-.al-badge.warn { background: var(--warn); color: #000; }
-.al-badge.info { background: #1a4fd6; color: #fff; }
-.al-badge.ok { background: var(--ok); color: #fff; }
-.al-desc { font-weight: 800; flex: 1; margin: 0 10px; }
-.al-val { font-weight: 950; font-family: monospace; font-size: 14.5px; }
+/* ===== SPACEX-STYLE PROGRESSIVE FLIGHT MILESTONES ===== */
+.spacex-timeline-wrap {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+.spacex-timeline {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    align-items: start;
+    gap: 2px;
+    padding: 0 2px;
+    width: 100%;
+}
+.spx-track {
+    position: absolute;
+    top: 8px;
+    left: 7%;
+    right: 7%;
+    height: 3px;
+    background: var(--soft-border);
+    border-radius: 2px;
+    z-index: 0;
+    transform: translateY(-50%);
+}
+.spx-track-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--ok), var(--accent));
+    border-radius: 2px;
+    transition: width 0.35s ease;
+}
+.spx-step {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 3px;
+    min-width: 0;
+}
+.spx-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 2.5px solid var(--soft-border);
+    transition: all 0.25s ease;
+    box-sizing: border-box;
+}
+.spx-step.done .spx-dot {
+    background: var(--ok);
+    border-color: var(--ok);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.45);
+}
+.spx-step.active .spx-dot {
+    background: var(--accent);
+    border-color: var(--ink);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.65);
+    transform: scale(1.12);
+}
+.spx-lbl {
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.spx-step.done .spx-lbl,
+.spx-step.active .spx-lbl {
+    color: var(--ink);
+}
+.spx-time {
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--muted);
+}
+.spx-step.done .spx-time { color: var(--ok); }
+.spx-step.active .spx-time { color: var(--accent); }
+
+.al-row { padding: 3px 4px; border-bottom: 1px solid var(--soft-border); display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+.al-badge { font-weight: 800; font-size: 10.5px; font-family: var(--font-mono); padding: 2px 7px; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+.al-badge.crit { background: var(--bad-bg); color: var(--bad); border: 1px solid rgba(239, 68, 68, 0.45); }
+.al-badge.warn { background: var(--warn-bg); color: var(--warn); border: 1px solid rgba(245, 158, 11, 0.45); }
+.al-badge.info { background: rgba(56, 189, 248, 0.12); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.35); }
+.al-badge.ok { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(16, 185, 129, 0.4); }
+.al-desc { font-weight: 700; flex: 1; margin: 0 10px; font-size: 13px; }
+.al-val { font-weight: 800; font-family: var(--font-mono); font-size: 14px; }
 .al-nominal-pill {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 12.5px;
-    font-weight: 900;
+    font-size: 13px;
+    font-weight: 700;
     color: var(--ok);
     padding: 4px 0;
 }
@@ -456,7 +918,7 @@ html[data-theme="dark"] .trend-pill.yellow {
 .diag-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(0, 0, 0, 0.72);
     backdrop-filter: blur(3px);
     z-index: 9999;
     display: none;
@@ -468,58 +930,61 @@ html[data-theme="dark"] .trend-pill.yellow {
 .diag-modal {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 2px;
     width: 100%;
     max-width: 900px;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.45);
 }
 .diag-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 16px;
+    padding: 10px 14px;
     background: var(--soft);
     border-bottom: 1px solid var(--border);
 }
 .diag-header h2 {
     margin: 0;
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 800;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 .btn-diag-close {
     background: transparent;
     border: none;
-    font-size: 24px;
-    font-weight: 900;
+    font-size: 20px;
+    font-weight: 600;
     cursor: pointer;
-    color: var(--ink);
+    color: var(--gray);
     padding: 0 6px;
     line-height: 1;
 }
+.btn-diag-close:hover { color: var(--ink); }
 .diag-body {
-    padding: 12px;
+    padding: 10px;
     overflow-y: auto;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 10px;
+    gap: 8px;
 }
 .diag-card {
-    background: var(--bg);
+    background: var(--soft);
     border: 1px solid var(--soft-border);
-    border-radius: 6px;
+    border-radius: 2px;
     padding: 8px 10px;
 }
 .diag-card h3 {
     margin: 0 0 6px 0;
-    font-size: 10.5px;
-    font-weight: 900;
-    color: var(--gray);
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--ink);
     letter-spacing: 0.06em;
+    text-transform: uppercase;
     border-bottom: 1px solid var(--soft-border);
     padding-bottom: 4px;
 }
@@ -527,13 +992,13 @@ html[data-theme="dark"] .trend-pill.yellow {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    font-size: 12.5px;
-    padding: 2.5px 0;
+    font-size: 13px;
+    padding: 3px 0;
     border-bottom: 1px solid var(--soft-border);
 }
 .diag-row:last-child { border-bottom: none; }
-.diag-row .k { font-weight: 700; color: var(--gray); }
-.diag-row .v { font-weight: 950; font-family: monospace; font-size: 13.5px; }
+.diag-row .k { font-size: 12px; font-weight: 600; color: var(--gray); }
+.diag-row .v { font-weight: 800; font-family: var(--font-mono); font-size: 13.5px; color: var(--ink); }
 .diag-full { grid-column: 1 / -1; }
 
 /* ============================================================
@@ -599,9 +1064,21 @@ html[data-theme="dark"] .trend-pill.yellow {
     }
 
     .flight-metrics-grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
+        display: flex !important;
+        flex-direction: column !important;
         gap: 6px !important;
+    }
+
+    .flight-pair-row {
+        gap: 6px !important;
+        border-bottom: none !important;
+    }
+
+    .flight-metrics-grid .flight-cell {
+        border: 1px solid var(--soft-border) !important;
+        background: var(--soft) !important;
+        border-radius: 2px !important;
+        padding: 6px 8px !important;
     }
 
     .flight-cell-wide {
@@ -682,7 +1159,7 @@ html[data-theme="dark"] .trend-pill.yellow {
                 <a href="/recovery" class="nav-tab">RECUPERACIÓN</a>
             </nav>
             <button type="button" class="theme-toggle" id="btnThemeToggle" title="Alternar modo oscuro / claro" aria-label="Alternar modo oscuro / claro">
-                <span class="theme-icon" id="themeIcon">🌙</span>
+                <span class="theme-icon" id="themeIcon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
                 <span class="theme-label" id="themeLabel">OSCURO</span>
             </button>
         </div>
@@ -690,66 +1167,95 @@ html[data-theme="dark"] .trend-pill.yellow {
         <div class="hgroup">
             <div class="hcell"><span class="k">HORA LOCAL</span><span class="v clock num" id="localTime">00:00:00</span></div>
             <div class="hcell"><span class="k">TIEMPO DE MISIÓN</span><span class="v clock num">T+ <span id="clock">00:00:00</span></span></div>
-            <div class="hcell"><span class="k">FASE DE VUELO</span><span class="phase" id="phase">---</span></div>
-            <div class="hcell"><span class="k">SEÑAL RF (RSSI)</span><span class="v num nd" id="rssi">N/D</span></div>
             <div class="hcell"><span class="k">ENLACE</span><span class="v" style="font-size:15px"><span class="dot" id="linkDot"></span><span id="linkStatus">DESCONECTADO</span></span></div>
         </div>
     </header>
 
     <main class="dashboard">
 
-        <!-- ==================== ZONA 2: COLUMNA IZQUIERDA (26% × 81%) ==================== -->
+        <!-- ==================== ZONA 2: COLUMNA IZQUIERDA (26% × 80%) ==================== -->
         <section class="panel">
             <div class="card grow flight-panel-card">
                 <div class="card-title">
                     <span>DINÁMICA DE VUELO</span>
                 </div>
 
-                <!-- Altitud Hero Box -->
-                <div class="alt-hero-box">
-                    <div class="alt-hero-lbl">ALTITUD ACTUAL</div>
-                    <div class="alt-hero-val">
-                        <span class="num big" id="altitude">---</span>
-                        <span class="unit">m</span>
-                    </div>
-                </div>
-
-                <!-- Métricas Primarias de Vuelo (Visual Instrument Cards) -->
+                <!-- 3 Secciones Equilibradas Verticalmente: Altitud | Vel. Vertical + VSI | Carga G + Medidor -->
                 <div class="flight-metrics-grid">
-                    <!-- 1. Velocidad Vertical con indicador dinámico de tendencia -->
-                    <div class="flight-cell">
-                        <div class="flight-cell-header">
-                            <span class="lbl">VEL. VERTICAL (Vz)</span>
-                            <span class="trend-pill" id="vzTrend">▬ ESTABLE</span>
+                    <!-- Sección 1: Altitud Barométrica -->
+                    <div class="dyn-section">
+                        <div class="dyn-hero-row">
+                            <div class="dyn-hero-lbl">
+                                <span>ALTITUD</span>
+                                <span>BAROMÉTRICA</span>
+                            </div>
+                            <div class="dyn-hero-val">
+                                <span class="num big" id="altitude">---</span>
+                                <span class="unit">m</span>
+                            </div>
                         </div>
-                        <div class="val num" id="altitudeVz">--- m/s</div>
                     </div>
 
-                    <!-- 2. Apogeo Máximo Alcanzado -->
-                    <div class="flight-cell">
-                        <div class="flight-cell-header">
-                            <span class="lbl">APOGEO (MÁX)</span>
-                            <span class="trend-pill" id="apogeeStatus">PENDIENTE</span>
+                    <!-- Sección 2: Velocidad Vertical + Barra Bipolar VSI -->
+                    <div class="dyn-section">
+                        <div class="dyn-hero-row">
+                            <div class="dyn-hero-lbl">
+                                <span>VELOCIDAD</span>
+                                <span>VERTICAL</span>
+                            </div>
+                            <div class="dyn-hero-val">
+                                <span class="num big" id="altitudeVz">---</span>
+                                <span class="unit">m/s</span>
+                            </div>
                         </div>
-                        <div class="val num" id="altitudeMax">--- m</div>
+                        <div class="vz-bar-wrap">
+                            <div class="vz-bar-track">
+                                <div class="vz-bar-neg" id="vzBarNeg"></div>
+                                <div class="vz-bar-pos" id="vzBarPos"></div>
+                                <div class="bar-tick" style="left: 25%;"></div>
+                                <div class="vz-bar-zero"></div>
+                                <div class="bar-tick" style="left: 75%;"></div>
+                            </div>
+                            <div class="vz-bar-scale">
+                                <span style="left: 0%;">−120</span>
+                                <span style="left: 25%; transform: translateX(-50%);">−60</span>
+                                <span style="left: 50%; transform: translateX(-50%);">0</span>
+                                <span style="left: 75%; transform: translateX(-50%);">+60</span>
+                                <span style="right: 0%;">+120</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- 3. Carga G Axial con barra de carga visual y umbrales -->
-                    <div class="flight-cell flight-cell-wide" id="gmeterCell">
-                        <div class="flight-cell-header">
-                            <span class="lbl">CARGA G (AXIAL)</span>
-                            <span class="trend-pill" id="gmeterStatus">1.0 g</span>
+                    <!-- Sección 3: Carga en G + Medidor −2g a +16g con punto en 1g -->
+                    <div class="dyn-section">
+                        <div class="dyn-hero-row">
+                            <div class="dyn-hero-lbl" style="gap: 4px;">
+                                <span>CARGA EN G</span>
+                                <span class="trend-pill" id="gmeterStatus" style="width: fit-content;">NOMINAL</span>
+                            </div>
+                            <div class="dyn-hero-val">
+                                <span class="num big" id="gTotalVal">---</span>
+                                <span class="unit">g</span>
+                            </div>
                         </div>
-                        <div class="val num" id="gmeterVal">+0.0 g</div>
-                        <div class="g-bar-wrap">
+                        <div class="g-bar-wrap" style="margin-top: 0;">
                             <div class="g-bar-track">
-                                <div class="g-bar-fill" id="gBarFill" style="width: 8.3%;"></div>
+                                <div class="g-bar-neg" id="gBarNeg"></div>
+                                <div class="g-bar-fill" id="gBarFill"></div>
+                                <div class="g-bar-zero" title="0g"></div>
+                                <div class="g-one-point" title="1g nominal"></div>
+                                <div class="bar-tick" style="left: 33.333%;"></div>
+                                <div class="bar-tick" style="left: 55.556%;"></div>
+                                <div class="bar-tick" style="left: 77.778%;"></div>
                             </div>
                             <div class="g-bar-scale">
-                                <span>0g</span>
-                                <span>1g</span>
-                                <span>6g</span>
-                                <span>12g</span>
+                                <span style="left: 0%;">−2g</span>
+                                <span style="left: 11.111%; transform: translateX(-50%);">0</span>
+                                <span style="left: 16.667%; transform: translateX(-50%); color: #d97706;">1g</span>
+                                <span style="left: 33.333%; transform: translateX(-50%);">4g</span>
+                                <span style="left: 55.556%; transform: translateX(-50%);">8g</span>
+                                <span style="left: 77.778%; transform: translateX(-50%);">12g</span>
+                                <span style="right: 0%;">16g</span>
                             </div>
                         </div>
                     </div>
@@ -757,7 +1263,8 @@ html[data-theme="dark"] .trend-pill.yellow {
 
                 <!-- Botón Overlay Diagnósticos y Sensores -->
                 <button type="button" class="btn-diag-toggle" id="btnOpenDiag" title="Ver telemetría detallada, aceleración triaxial, giróscopo y enlaces">
-                    🔧 SENSORES &amp; DIAGNÓSTICOS
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                    <span>SENSORES &amp; DIAGNÓSTICOS</span>
                 </button>
             </div>
         </section>
@@ -773,10 +1280,10 @@ html[data-theme="dark"] .trend-pill.yellow {
                 <div class="chart-box"><canvas id="chAlt"></canvas></div>
             </div>
 
-            <!-- 2. GRÁFICO INFERIOR: G-LOAD (ACEL. AXIAL) -->
+            <!-- 2. GRÁFICO INFERIOR: CARGA G (−2g A +16g) -->
             <div class="card chart-card" style="flex: 1 1 0;">
                 <div class="card-title">
-                    <span>CARGA G (ACEL. AXIAL — g)</span>
+                    <span>CARGA G (−2g A +16g)</span>
                 </div>
                 <div class="chart-box"><canvas id="chVel"></canvas></div>
             </div>
@@ -805,13 +1312,40 @@ html[data-theme="dark"] .trend-pill.yellow {
                         <span><i class="dot-sm bad"></i>Desconectado</span>
                     </div>
                 </div>
+
+                <!-- RSSI (dBm) | SNR (dB) en formato col-6 | col-6 ocupando todo el contenedor -->
+                <div class="rf-metrics-row">
+                    <div class="rf-metric-cell cell-left">
+                        <span class="rf-metric-lbl">RSSI:</span>
+                        <span class="rf-metric-val num"><span id="rfRssiVal">---</span><span class="rf-metric-unit">dBm</span></span>
+                    </div>
+                    <div class="rf-metric-cell cell-right">
+                        <span class="rf-metric-lbl">SNR:</span>
+                        <span class="rf-metric-val num"><span id="rfSnrVal">---</span><span class="rf-metric-unit">dB</span></span>
+                    </div>
+                </div>
+
+                <!-- Barra de Intensidad de Señal RSSI (−120 dBm a −40 dBm) -->
+                <div class="rf-rssi-bar-wrap">
+                    <div class="rf-rssi-track">
+                        <div class="rf-rssi-fill" id="rfRssiBarFill"></div>
+                        <div class="bar-tick" style="left: 31.25%;"></div>
+                        <div class="bar-tick" style="left: 56.25%;"></div>
+                    </div>
+                    <div class="rf-rssi-scale">
+                        <span style="left: 0%;">−120 dBm</span>
+                        <span style="left: 31.25%; transform: translateX(-50%);">−95</span>
+                        <span style="left: 56.25%; transform: translateX(-50%);">−75</span>
+                        <span style="right: 0%;">−40 dBm</span>
+                    </div>
+                </div>
             </div>
 
             <!-- 2. PANEL INFERIOR DERECHO: POSICIÓN Y NAVEGACIÓN GPS -->
             <div class="card grow">
                 <div class="card-title">
                     <span>POSICIÓN Y NAVEGACIÓN GPS</span>
-                    <span class="hint" id="fixQuality">RESCATE</span>
+                    <span class="hint"><span id="fixQuality">RESCATE</span> · SAT <b class="num" id="satellites">--</b></span>
                 </div>
 
                 <!-- Mapa Satelital / Vectorial con rastro y semáforo de calidad -->
@@ -822,22 +1356,17 @@ html[data-theme="dark"] .trend-pill.yellow {
                     <div id="gpsMap" style="width:100%; height:100%;"></div>
                 </div>
 
-                <!-- Vector Guía de Rescate desde Base -->
-                <div class="guidance-banner">
-                    <span class="lbl">DESDE BASE:</span>
-                    <span class="val num" id="guidanceVector">--- m • ---°</span>
-                </div>
-
-                <!-- Coordenadas Compactas (Lat/Lon + Satélites) -->
-                <div class="coords-compact">
-                    <div class="coord-item">
-                        <span class="lbl">LAT / LON:</span>
-                        <span class="val num" id="latLonMerged">---, ---</span>
+                <!-- Coordenadas Full-Width: LAT | LON ocupando todo el ancho -->
+                <div class="gps-coords-bar">
+                    <div class="gps-coord-cell left">
+                        <span class="gps-coord-lbl">LAT:</span>
+                        <span class="gps-coord-val num" id="gpsLatVal">---</span>
                     </div>
-                    <div class="coord-item sat-badge">
-                        <span class="lbl">SAT:</span>
-                        <span class="val num" id="satellites">--</span>
+                    <div class="gps-coord-cell right">
+                        <span class="gps-coord-lbl">LON:</span>
+                        <span class="gps-coord-val num" id="gpsLonVal">---</span>
                     </div>
+                    <span id="latLonMerged" style="display:none;">---, ---</span>
                 </div>
             </div>
         </section>
@@ -863,13 +1392,24 @@ html[data-theme="dark"] .trend-pill.yellow {
             </div>
         </div>
 
-        <!-- HITOS DE VUELO (ÚLTIMOS 3) -->
+        <!-- HITOS DE VUELO (TIMELINE PROGRESIVO ESTILO SPACEX — 7 HITOS) -->
         <div class="card">
             <div class="card-title">
                 <span>HITOS DE VUELO</span>
-                <span class="hint" id="eventStats">0 eventos</span>
+                <span class="hint" id="eventStats">0 / 7 HITOS</span>
             </div>
-            <div class="scroll" id="eventLog"><div class="empty">Sin hitos registrados</div></div>
+            <div class="spacex-timeline-wrap">
+                <div class="spacex-timeline" id="milestoneTimeline">
+                    <div class="spx-track"><div class="spx-track-fill" id="spxTrackFill"></div></div>
+                    <div class="spx-step" data-step="0"><div class="spx-dot"></div><span class="spx-lbl">RAMPA</span><span class="spx-time num">--:--</span></div>
+                    <div class="spx-step" data-step="1"><div class="spx-dot"></div><span class="spx-lbl">DESPEGUE</span><span class="spx-time num">--:--</span></div>
+                    <div class="spx-step" data-step="2"><div class="spx-dot"></div><span class="spx-lbl">BURNOUT</span><span class="spx-time num">--:--</span></div>
+                    <div class="spx-step" data-step="3"><div class="spx-dot"></div><span class="spx-lbl">APOGEO</span><span class="spx-time num">--:--</span></div>
+                    <div class="spx-step" data-step="4"><div class="spx-dot"></div><span class="spx-lbl">DROGUE</span><span class="spx-time num">--:--</span></div>
+                    <div class="spx-step" data-step="5"><div class="spx-dot"></div><span class="spx-lbl">MAIN</span><span class="spx-time num">--:--</span></div>
+                    <div class="spx-step" data-step="6"><div class="spx-dot"></div><span class="spx-lbl">TIERRA</span><span class="spx-time num">--:--</span></div>
+                </div>
+            </div>
         </div>
 
         <!-- ALERTAS OPERACIONALES (ISA-18.2) -->
@@ -927,6 +1467,7 @@ html[data-theme="dark"] .trend-pill.yellow {
                 <!-- Tarjeta 5: Enlace & Diagnóstico RF -->
                 <div class="diag-card">
                     <h3>ENLACE RF &amp; PROTOCOLO</h3>
+                    <div class="diag-row"><span class="k">Protocolo:</span><span class="v" id="diagProto">97B (GS v1 + 65B)</span></div>
                     <div class="diag-row"><span class="k">Secuencia (Seq):</span><span class="v" id="diagSeq">---</span></div>
                     <div class="diag-row"><span class="k">Tasa Recepción:</span><span class="v" id="diagRate">0,0 Hz</span></div>
                     <div class="diag-row"><span class="k">Pérdida (5 s):</span><span class="v" id="diagLoss5s">0,0 %</span></div>
@@ -935,7 +1476,18 @@ html[data-theme="dark"] .trend-pill.yellow {
                     <div class="diag-row"><span class="k">Temp. IMU:</span><span class="v" id="tempImuDiag">--- °C</span></div>
                 </div>
 
-                <!-- Tarjeta 6: Historial Completo de Eventos -->
+                <!-- Tarjeta 6: Receptor Terreno (Header USB 32B — 97B) -->
+                <div class="diag-card">
+                    <h3>RECEPTOR TERRENO (HW 97B)</h3>
+                    <div class="diag-row"><span class="k">RSSI / SNR LoRa:</span><span class="v" id="diagRfSignal">N/D</span></div>
+                    <div class="diag-row"><span class="k">Enlace LoRa (GS):</span><span class="v" id="diagGsLink">---</span></div>
+                    <div class="diag-row"><span class="k">RX / Perdidos (HW):</span><span class="v" id="diagGsRxLost">---</span></div>
+                    <div class="diag-row"><span class="k">Errores CRC / Tam.:</span><span class="v" id="diagGsErrs">---</span></div>
+                    <div class="diag-row"><span class="k">Reinicios TX:</span><span class="v" id="diagTxReboots">---</span></div>
+                    <div class="diag-row"><span class="k">Uptime Receptor:</span><span class="v" id="diagGsUptime">---</span></div>
+                </div>
+
+                <!-- Tarjeta 7: Historial Completo de Eventos -->
                 <div class="diag-card diag-full">
                     <h3>HISTORIAL COMPLETO DE HITOS Y EVENTOS</h3>
                     <div class="scroll" style="max-height: 140px;" id="fullEventLog">
@@ -1072,7 +1624,7 @@ const state = {
     lastPacketArrival: 0,
     lastSilentSlotPush: 0,
 
-    hist: { alt: [], altGps: [], ax: [], ay: [], az: [], vz: [], speed: [] },
+    hist: { alt: [], altGps: [], ax: [], ay: [], az: [], gTotal: [], vz: [], speed: [] },
     markers: [],
 
     peakBoostG: 0,
@@ -1082,7 +1634,8 @@ const state = {
     maxChartVz: 0,
     minChartVz: 0,
 
-    altitude: null, maxAltitude: null, vz: null,
+    altitude: null, maxAltitude: null, vz: null, maxVz: 0,
+    gTotal: null, maxTotalG: 0,
     vzHistory: [],      // [{ t, alt }] para derivación limpia y sin ruido
     pressure: null,
 
@@ -1099,9 +1652,13 @@ const state = {
     pinPrincipal: null,
     statusText: null,
     rssi: null,
+    snr: null,
+    gs: null,
+    lastTxReboots: null,
 
     events: [],
     eventsVersion: 0,
+    milestonesReached: [null, null, null, null, null, null, null],
     frames: [],
     framesVersion: 0,
 
@@ -1185,6 +1742,36 @@ function addEvent(message, markerLabel = null) {
     if (state.markers.length > 30) state.markers.shift();
 }
 
+function applyGsMeta(d = null, stats = null, isHistory = false) {
+    if (typeof window.extractGsMeta !== "function") return null;
+    const gs = window.extractGsMeta(d, stats);
+    if (gs.rssi !== null) state.rssi = gs.rssi;
+    if (gs.snr !== null) state.snr = gs.snr;
+    const prev = state.gs || {};
+    state.gs = {
+        protoVersion: gs.protoVersion ?? prev.protoVersion ?? 1,
+        rssi: gs.rssi ?? prev.rssi ?? null,
+        snr: gs.snr ?? prev.snr ?? null,
+        gsUptimeMs: gs.gsUptimeMs ?? prev.gsUptimeMs ?? null,
+        rxPackets: gs.rxPackets ?? prev.rxPackets ?? null,
+        rxLost: gs.rxLost ?? prev.rxLost ?? null,
+        rxCrcErrors: gs.rxCrcErrors ?? prev.rxCrcErrors ?? null,
+        rxSizeErrors: gs.rxSizeErrors ?? prev.rxSizeErrors ?? null,
+        txReboots: gs.txReboots ?? prev.txReboots ?? null,
+        gsLinkActive: gs.gsLinkActive ?? prev.gsLinkActive ?? null,
+        gsRocketCrcOk: gs.gsRocketCrcOk ?? prev.gsRocketCrcOk ?? null,
+        gsTxReboot: gs.gsTxReboot ?? null
+    };
+    if (!isHistory && gs.txReboots !== null) {
+        const rebooted = gs.gsTxReboot === true || (state.lastTxReboots !== null && gs.txReboots > state.lastTxReboots);
+        if (rebooted) {
+            addEvent(`Reinicio detectado en transmisor del cohete (TX Reboot #${gs.txReboots})`, "TX REBOOT");
+        }
+        state.lastTxReboots = gs.txReboots;
+    }
+    return state.gs;
+}
+
 function ingest(message, isHistory = false) {
     const d = message.data || message.telemetry || message;
     if (!d || typeof d !== "object") return;
@@ -1220,6 +1807,9 @@ function ingest(message, isHistory = false) {
     }
     state.seqWindow.push({ t: isHistory ? frameEpochMs : now, rec: 1, lost: lostInStep });
 
+    if (message.statistics) state.stats = { ...state.stats, ...message.statistics };
+    const gsMeta = applyGsMeta(d, message.statistics, isHistory);
+
     // Actualización de ranuras de la cinta de salud de conexión (Health Ribbon)
     if (!isHistory) {
         if (lostInStep > 0) {
@@ -1229,9 +1819,12 @@ function ingest(message, isHistory = false) {
             }
         }
         let slotType = 1; // Verde: todo OK
-        const currentRssi = Number.isFinite(Number(d.rssi)) ? Number(d.rssi) : state.rssi;
-        if (currentRssi !== null && currentRssi < -85) {
-            slotType = 2; // Amarillo: baja señal
+        const currentRssi = gsMeta && gsMeta.rssi !== null ? gsMeta.rssi : state.rssi;
+        const currentSnr = gsMeta && gsMeta.snr !== null ? gsMeta.snr : state.snr;
+        if (gsMeta && gsMeta.gsLinkActive === false) {
+            slotType = 4; // Rojo: enlace LoRa reportado inactivo por GS
+        } else if ((currentRssi !== null && currentRssi < -85) || (currentSnr !== null && currentSnr < -5.0)) {
+            slotType = 2; // Amarillo: baja señal RF (RSSI o SNR)
         } else if (state.lossRecentPercent > 5) {
             slotType = 3; // Ámbar: pérdida de paquetes reciente
         }
@@ -1256,11 +1849,6 @@ function ingest(message, isHistory = false) {
         ts = now - state.startedAt;
     }
     state.lastChartTimestamp = ts;
-
-    if (message.statistics) state.stats = { ...state.stats, ...message.statistics };
-
-    // RF (solo si el backend lo envía)
-    if (Number.isFinite(Number(d.rssi))) state.rssi = Number(d.rssi);
 
     // Satélites GPS
     if (Number.isFinite(Number(d.satellites))) {
@@ -1298,6 +1886,7 @@ function ingest(message, isHistory = false) {
                     state.vz = rawVz;
                     state.maxChartVz = Math.max(state.maxChartVz || 0, state.vz);
                     state.minChartVz = Math.min(state.minChartVz || 0, state.vz);
+                    state.maxVz = Math.max(state.maxVz || 0, Math.abs(state.vz));
                     pushHist("vz", ts, state.vz);
                 }
             }
@@ -1313,9 +1902,14 @@ function ingest(message, isHistory = false) {
     const ax = Number(d.accel_x), ay = Number(d.accel_y), az = Number(d.accel_z);
     if ([ax, ay, az].every(Number.isFinite)) {
         state.ax = ax; state.ay = ay; state.az = az;
+        const gMag = Math.hypot(ax, ay, az);
+        const gSigned = az < 0 ? -gMag : gMag;
+        state.gTotal = gSigned;
+        state.maxTotalG = Math.max(state.maxTotalG || 0, gMag);
         pushHist("ax", ts, ax);
         pushHist("ay", ts, ay);
         pushHist("az", ts, az);
+        pushHist("gTotal", ts, gSigned);
 
         // Actualización de marcas Dual Peak (Boost vs Parachute Shock)
         const frameStatusText = d.status_label ?? (Number.isFinite(Number(d.status)) ? STATUS_LABELS[Number(d.status)] : null) ?? state.statusText ?? "";
@@ -1414,11 +2008,24 @@ function ingest(message, isHistory = false) {
                 state.maxChartAlt = 0;
                 state.maxChartVz = 0;
                 state.minChartVz = 0;
+                state.milestonesReached = [null, null, null, null, null, null, null];
             }
             state.statusText = text;
             addEvent(`Fase: ${phaseName(text)}`, phaseMark(text));
         }
     }
+
+    // Actualización incremental de 7 hitos estilo SpaceX (PLATAFORMA -> ATERRIZAJE)
+    const stCode = code ?? 0;
+    const stUpper = String(text || "").toUpperCase();
+    const curElapsed = elapsed(missionTime());
+    if (!state.milestonesReached[0]) state.milestonesReached[0] = "LISTO";
+    if ((state.liftoffDetected || stCode >= 1) && !state.milestonesReached[1]) state.milestonesReached[1] = curElapsed;
+    if ((stCode >= 2 || stUpper.includes("BURNOUT")) && !state.milestonesReached[2]) state.milestonesReached[2] = curElapsed;
+    if ((stCode >= 4 || stUpper.includes("APOGEE")) && !state.milestonesReached[3]) state.milestonesReached[3] = curElapsed;
+    if ((stCode >= 8 || stUpper.includes("DROGUE") || state.pinFrenado === 1) && !state.milestonesReached[4]) state.milestonesReached[4] = curElapsed;
+    if ((stCode >= 32 || stUpper.includes("MAIN") || state.pinPrincipal === 1) && !state.milestonesReached[5]) state.milestonesReached[5] = curElapsed;
+    if ((stCode >= 128 || stUpper.includes("LANDED")) && !state.milestonesReached[6]) state.milestonesReached[6] = curElapsed;
 
     // Registro en eventos solo ante cambio de fase
     // (procesado arriba)
@@ -1462,13 +2069,13 @@ function niceRange(min, max, minSpan, fixedMin, fixedMax) {
     return [Math.min(effMin - pad, 0), effMax + pad];
 }
 
-function drawChart(canvasId, series, decimals, minSpan, signedLabels, fixedMin, fixedMax) {
+function drawChart(canvasId, series, decimals, minSpan, signedLabels, fixedMin, fixedMax, showMarkers = true) {
     const canvasEl = $(canvasId);
     if (!canvasEl || canvasEl.style.display === "none") return;
     const { ctx, w, h } = fitCanvas(canvasEl);
     ctx.clearRect(0, 0, w, h);
 
-    const left = 54, right = 10, top = 8, bottom = 20;
+    const left = 58, right = 10, top = 8, bottom = 20;
     const pw = w - left - right, ph = h - top - bottom;
     if (pw <= 0 || ph <= 0) return;
 
@@ -1492,12 +2099,12 @@ function drawChart(canvasId, series, decimals, minSpan, signedLabels, fixedMin, 
     const Y = v => top + ph - (v - lo) * invRange;
 
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-    const textCol = isDark ? "#94a3b8" : "#64748b";
-    const gridCol = isDark ? "#1e293b" : "#f1f5f9";
-    const zeroCol = isDark ? "#64748b" : "#94a3b8";
-    const borderCol = isDark ? "#334155" : "#cbd5e1";
+    const textCol = isDark ? "#b6c4d6" : "#334155";
+    const gridCol = isDark ? "#182230" : "#e2e8f0";
+    const zeroCol = isDark ? "#52637a" : "#94a3b8";
+    const borderCol = isDark ? "#222e40" : "#cbd5e1";
 
-    ctx.font = "bold 11px Arial";
+    ctx.font = "700 11.5px 'JetBrains Mono', Consolas, monospace";
     ctx.fillStyle = textCol;
     ctx.strokeStyle = gridCol;
     ctx.lineWidth = 1;
@@ -1582,17 +2189,19 @@ function drawChart(canvasId, series, decimals, minSpan, signedLabels, fixedMin, 
     ctx.setLineDash([5, 4]);
     ctx.font = "bold 11px Arial";
     ctx.textAlign = "left"; ctx.textBaseline = "top";
-    for (const m of state.markers) {
-        if (m.t < start || m.t > end) continue;
-        const x = X(m.t);
-        ctx.strokeStyle = isDark ? "#38bdf8" : "#2563eb";
-        ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, top + ph); ctx.stroke();
-        const tw = ctx.measureText(m.label).width + 6;
-        ctx.setLineDash([]);
-        ctx.fillStyle = isDark ? "#17202d" : "#f8fafc"; ctx.fillRect(x + 1, top + 1, tw, 15);
-        ctx.fillStyle = isDark ? "#f0f6fc" : "#0f172a";
-        ctx.fillText(m.label, x + 4, top + 2);
-        ctx.setLineDash([5, 4]);
+    if (showMarkers) {
+        for (const m of state.markers) {
+            if (m.t < start || m.t > end) continue;
+            const x = X(m.t);
+            ctx.strokeStyle = isDark ? "#38bdf8" : "#2563eb";
+            ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, top + ph); ctx.stroke();
+            const tw = ctx.measureText(m.label).width + 6;
+            ctx.setLineDash([]);
+            ctx.fillStyle = isDark ? "#17202d" : "#f8fafc"; ctx.fillRect(x + 1, top + 1, tw, 15);
+            ctx.fillStyle = isDark ? "#f0f6fc" : "#0f172a";
+            ctx.fillText(m.label, x + 4, top + 2);
+            ctx.setLineDash([5, 4]);
+        }
     }
     ctx.setLineDash([]);
     ctx.restore();
@@ -1733,58 +2342,64 @@ function renderText() {            // ~10 Hz
         }
         if (state.vz !== null) {
             const vz = state.vz;
-            const arrow = vz > 0.5 ? "▲ " : (vz < -0.5 ? "▼ " : "");
-            setText("altitudeVz", `${arrow}${fmtSigned(vz, 1)} m/s`);
-            const vzTrendEl = $("vzTrend");
-            if (vzTrendEl) {
-                if (vz > 1.0) {
-                    vzTrendEl.textContent = "▲ ASCENSO";
-                    vzTrendEl.className = "trend-pill asc";
-                } else if (vz < -1.0) {
-                    vzTrendEl.textContent = "▼ DESCENSO";
-                    vzTrendEl.className = "trend-pill desc";
-                } else {
-                    vzTrendEl.textContent = "▬ ESTABLE";
-                    vzTrendEl.className = "trend-pill";
-                }
+            setText("altitudeVz", fmtSigned(vz, 1));
+            const vzPosEl = $("vzBarPos");
+            const vzNegEl = $("vzBarNeg");
+            const halfPct = Math.min(Math.abs(vz) / 120, 1) * 50;
+            if (vzPosEl) vzPosEl.style.width = vz > 0 ? `${halfPct.toFixed(1)}%` : "0%";
+            if (vzNegEl) {
+                vzNegEl.style.width = vz < 0 ? `${halfPct.toFixed(1)}%` : "0%";
+                vzNegEl.classList.toggle("fast", vz < -45);
             }
         } else {
-            setText("altitudeVz", "--- m/s");
+            setText("altitudeVz", "---");
+            if ($("vzBarPos")) $("vzBarPos").style.width = "0%";
+            if ($("vzBarNeg")) $("vzBarNeg").style.width = "0%";
         }
     }
-    if (state.ax !== null) {
-        const ax = state.ax;
-        setText("gmeterVal", `${fmtSigned(ax, 1)} g`);
-        const absAx = Math.abs(ax);
-        const pct = Math.min(Math.max((absAx / 12) * 100, 0), 100);
+    if (state.gTotal !== null) {
+        const gTotal = state.gTotal;
+        setText("gTotalVal", fmtSigned(gTotal, 2));
         const gBarFill = $("gBarFill");
+        const gBarNeg = $("gBarNeg");
+        const absG = Math.abs(gTotal);
         if (gBarFill) {
-            gBarFill.style.width = `${pct.toFixed(1)}%`;
-            gBarFill.classList.toggle("crit", absAx >= 10);
-            gBarFill.classList.toggle("warn", absAx >= 8 && absAx < 10);
+            const posPct = gTotal > 0 ? Math.min(gTotal, 16) / 18 * 100 : 0;
+            gBarFill.style.width = `${posPct.toFixed(2)}%`;
+            gBarFill.classList.toggle("crit", gTotal >= 14);
+            gBarFill.classList.toggle("warn", gTotal >= 10 && gTotal < 14);
+        }
+        if (gBarNeg) {
+            const negPct = gTotal < 0 ? Math.min(-gTotal, 2) / 18 * 100 : 0;
+            gBarNeg.style.width = `${negPct.toFixed(2)}%`;
         }
         const gmeterStatus = $("gmeterStatus");
         if (gmeterStatus) {
-            if (absAx >= 10) {
-                gmeterStatus.textContent = "ALTO G (CRÍT)";
+            if (gTotal >= 14) {
+                gmeterStatus.textContent = "ALTO G";
                 gmeterStatus.className = "trend-pill crit";
-            } else if (absAx >= 8) {
+            } else if (gTotal >= 10) {
                 gmeterStatus.textContent = "CARGA ELEVADA";
                 gmeterStatus.className = "trend-pill warn";
+            } else if (gTotal < -0.2) {
+                gmeterStatus.textContent = "FRENADO AERO";
+                gmeterStatus.className = "trend-pill warn";
             } else {
-                gmeterStatus.textContent = absAx < 0.2 ? "MICROGRAV" : "NOMINAL";
+                gmeterStatus.textContent = absG < 0.2 ? "MICROGRAV" : "NOMINAL";
                 gmeterStatus.className = "trend-pill";
             }
         }
     }
 
-    // 2. Sensores & Diagnósticos (Modal / Drawer)
+    // 2. Sensores & Diagnósticos (Modal + Panel Izquierdo Dinámica)
     if (state.pressure !== null) {
         setText("pressure", `${fmt(state.pressure, 1)} hPa`);
+        setText("pressureHero", `${fmt(state.pressure, 1)} hPa`);
     }
     if (state.altGps !== null) {
         setText("altGpsDiag", `${fmt(state.altGps, 0)} m`);
         setText("altGps", `${fmt(state.altGps, 0)} m`);
+        setText("altGpsHero", `${fmt(state.altGps, 0)} m`);
     }
     if (state.altitude !== null && state.altGps !== null) {
         const delta = Math.abs(state.altitude - state.altGps);
@@ -1794,13 +2409,20 @@ function renderText() {            // ~10 Hz
     if (state.ax !== null) setText("ax", `${fmtSigned(state.ax, 2)} g`);
     if (state.ay !== null) setText("ay", `${fmtSigned(state.ay, 2)} g`);
     if (state.az !== null) setText("az", `${fmtSigned(state.az, 2)} g`);
+    if (state.ay !== null && state.az !== null) {
+        setText("gAxesInline", `Y:${fmtSigned(state.ay, 1)} · Z:${fmtSigned(state.az, 1)}g`);
+    }
 
-    if (state.gx !== null) setText("gx", `${fmtSigned(state.gx, 1)} °/s`);
+    if (state.gx !== null) {
+        setText("gx", `${fmtSigned(state.gx, 1)} °/s`);
+        setText("spinHero", `${fmtSigned(state.gx, 1)} °/s`);
+    }
     if (state.gy !== null) setText("gy", `${fmtSigned(state.gy, 1)} °/s`);
     if (state.gz !== null) setText("gz", `${fmtSigned(state.gz, 1)} °/s`);
 
     if (state.tempImu !== null) {
         setText("tempImuDiag", `${fmt(state.tempImu, 1)} °C`);
+        setText("tempImuHero", `${fmt(state.tempImu, 1)} °C`);
     }
 
     // 3. Pines de Pirotecnia (con detección de overdue / fallo de eyección)
@@ -1817,11 +2439,16 @@ function renderText() {            // ~10 Hz
 
     // 4. Coordenadas y Navegación
     if (state.lat !== null && state.lon !== null) {
+        setText("gpsLatVal", `${fmt(state.lat, 5)}°`);
+        setText("gpsLonVal", `${fmt(state.lon, 5)}°`);
         setText("latLonMerged", `${fmt(state.lat, 4)}°, ${fmt(state.lon, 4)}°`);
         setText("lat", fmt(state.lat, 6));
         setText("lon", fmt(state.lon, 6));
     }
-    if (state.groundSpeed !== null) setText("groundSpeed", `${fmt(state.groundSpeed, 1)} m/s`);
+    if (state.groundSpeed !== null) {
+        setText("groundSpeed", `${fmt(state.groundSpeed, 1)} m/s`);
+        setText("groundSpeedHero", `${fmt(state.groundSpeed, 1)} m/s`);
+    }
     if (state.satellites !== null) {
         setText("satellites", String(state.satellites));
         const mapWrap = $("mapWrap");
@@ -1884,6 +2511,7 @@ function renderHeader() {          // ~2 Hz
         missionTimeMs: missionTime(),
         status: state.statusText,
         rssi: state.rssi,
+        snr: state.snr,
         lossPercent: state.lossRecentPercent,
         connected: state.connected,
         lastPacketAt: state.lastPacketAt,
@@ -1894,16 +2522,35 @@ function renderHeader() {          // ~2 Hz
 let eventsRendered = -1;
 let lastAlertsHtml = "";
 function renderLogs() {            // ~4 Hz
-    // 1. Registro de eventos (Últimos 3 en cockpit, todos en drawer)
+    // 1. Hitos progresivos estilo SpaceX (7 hitos) + Registro completo en modal
+    const reachedCount = state.milestonesReached.filter(Boolean).length;
+    setText("eventStats", `${reachedCount} / 7 HITOS`);
+    const timelineEl = $("milestoneTimeline");
+    if (timelineEl) {
+        let lastDone = -1;
+        for (let i = 0; i < 7; i++) {
+            if (state.milestonesReached[i]) lastDone = i;
+        }
+        const steps = timelineEl.querySelectorAll(".spx-step");
+        steps.forEach((stepEl, idx) => {
+            const ts = state.milestonesReached[idx];
+            const isDone = Boolean(ts);
+            const isActive = isDone && idx === lastDone && lastDone < 6;
+            stepEl.classList.toggle("done", isDone && !isActive);
+            stepEl.classList.toggle("active", isActive);
+            const timeSpan = stepEl.querySelector(".spx-time");
+            if (timeSpan) {
+                timeSpan.textContent = !ts ? "--:--" : (ts === "LISTO" ? "LISTO" : `T+ ${ts.slice(3)}`);
+            }
+        });
+        const fillEl = $("spxTrackFill");
+        if (fillEl) {
+            const pct = lastDone < 0 ? 0 : (lastDone / 6) * 100;
+            fillEl.style.width = `${pct}%`;
+        }
+    }
     if (eventsRendered !== state.eventsVersion) {
         eventsRendered = state.eventsVersion;
-        const recent = state.events.slice(0, 3);
-        const eventLogEl = $("eventLog");
-        if (eventLogEl) {
-            eventLogEl.innerHTML = recent.length
-                ? recent.map(e => `<div class="ev-row"><span class="ev-time num">T+ ${elapsed(e.t)}</span>${escapeHtml(e.message)}</div>`).join("")
-                : '<div class="empty">Sin hitos registrados</div>';
-        }
         const fullLogEl = $("fullEventLog");
         if (fullLogEl) {
             fullLogEl.innerHTML = state.events.length
@@ -1946,14 +2593,44 @@ function renderLogs() {            // ~4 Hz
         }
     }
 
-    setText("eventStats", `${state.events.length} eventos`);
-
     // Integridad CRC16
     const totalCrc = (state.stats.received || 0) + (state.stats.invalid || 0);
     const crcPct = totalCrc > 0 ? (100 - ((state.stats.invalid || 0) / totalCrc) * 100) : 100;
 
-    // Actualización de leyenda en la cinta de salud RF
+    // Actualización de leyenda en la cinta de salud RF + barra RSSI (−120 a −40 dBm)
     setText("rfLossVal", `${fmt(state.lossRecentPercent, 1)}%`);
+    setText("rfRssiVal", (state.rssi !== null && Number.isFinite(state.rssi)) ? fmt(state.rssi, 0) : "---");
+    const rfRssiBarEl = $("rfRssiBarFill");
+    if (rfRssiBarEl) {
+        if (state.rssi !== null && Number.isFinite(state.rssi)) {
+            const pct = Math.min(Math.max(((state.rssi + 120) / 80) * 100, 0), 100);
+            rfRssiBarEl.style.width = `${pct.toFixed(1)}%`;
+            rfRssiBarEl.classList.toggle("bad", state.rssi < -95);
+            rfRssiBarEl.classList.toggle("warn", state.rssi >= -95 && state.rssi < -75);
+        } else {
+            rfRssiBarEl.style.width = "0%";
+        }
+    }
+    if (state.snr !== null && Number.isFinite(state.snr)) {
+        const sign = state.snr >= 0 ? "+" : "";
+        setText("rfSnrVal", `${sign}${fmt(state.snr, 1)}`);
+    } else {
+        setText("rfSnrVal", "---");
+    }
+
+    const snrPillEl = $("rfSnrPill");
+    if (snrPillEl) {
+        if (state.snr !== null && Number.isFinite(state.snr)) {
+            const sign = state.snr >= 0 ? "+" : "";
+            snrPillEl.textContent = `SNR ${sign}${fmt(state.snr, 1)} dB`;
+            if (state.snr < -8.0) snrPillEl.className = "trend-pill crit";
+            else if (state.snr < -5.0) snrPillEl.className = "trend-pill yellow";
+            else snrPillEl.className = "trend-pill reached";
+        } else {
+            snrPillEl.textContent = "SNR N/D";
+            snrPillEl.className = "trend-pill";
+        }
+    }
 
     const rfBadgeEl = $("rfHealthBadge");
     if (rfBadgeEl) {
@@ -1961,13 +2638,16 @@ function renderLogs() {            // ~4 Hz
         if (!state.connected || silenceSec > 3.0) {
             rfBadgeEl.textContent = "DESCONECTADO";
             rfBadgeEl.className = "trend-pill crit";
+        } else if (state.gs && state.gs.gsLinkActive === false) {
+            rfBadgeEl.textContent = "SIN LORA";
+            rfBadgeEl.className = "trend-pill crit";
         } else if (silenceSec > 1.0) {
             rfBadgeEl.textContent = "SILENCIO";
             rfBadgeEl.className = "trend-pill warn";
         } else if (state.lossRecentPercent > 5) {
             rfBadgeEl.textContent = "PÉRDIDA";
             rfBadgeEl.className = "trend-pill warn";
-        } else if (state.rssi !== null && state.rssi < -85) {
+        } else if ((state.rssi !== null && state.rssi < -85) || (state.snr !== null && state.snr < -5.0)) {
             rfBadgeEl.textContent = "BAJA SEÑAL";
             rfBadgeEl.className = "trend-pill yellow";
         } else {
@@ -1977,6 +2657,8 @@ function renderLogs() {            // ~4 Hz
     }
 
     // Actualización de modal de Diagnóstico detallado
+    const gs = state.gs || {};
+    setText("diagProto", `97B (GS v${gs.protoVersion || 1} + 65B)`);
     setText("diagRxAfterP0", state.rxAfterP0.toLocaleString("es-AR"));
     setText("diagSeq", state.lastSeq !== null ? state.lastSeq.toLocaleString("es-AR") : "---");
     setText("diagLoss5s", `${fmt(state.lossRecentPercent, 1)} %`);
@@ -1986,6 +2668,35 @@ function renderLogs() {            // ~4 Hz
         crcEl.textContent = `${crcPct.toFixed(1)} %`;
         crcEl.style.color = (state.stats.invalid || 0) > 0 ? "var(--warn)" : "var(--ok)";
     }
+
+    // Tarjeta 6: Diagnóstico HW Receptor Terreno (Header USB 32B — 97B)
+    const rssiStr = state.rssi !== null ? `${fmt(state.rssi, 0)} dBm` : "N/D";
+    const snrStr = state.snr !== null ? `${state.snr >= 0 ? "+" : ""}${fmt(state.snr, 1)} dB` : "N/D";
+    setText("diagRfSignal", `${rssiStr} | ${snrStr}`);
+    const gsLinkEl = $("diagGsLink");
+    if (gsLinkEl) {
+        if (gs.gsLinkActive === null || gs.gsLinkActive === undefined) {
+            gsLinkEl.textContent = "---";
+            gsLinkEl.style.color = "var(--ink)";
+        } else {
+            const linkUp = gs.gsLinkActive !== false;
+            gsLinkEl.textContent = linkUp ? "ACTIVO" : "INACTIVO";
+            gsLinkEl.style.color = linkUp ? "var(--ok)" : "var(--bad)";
+        }
+    }
+    setText("diagGsRxLost", gs.rxPackets !== null && gs.rxPackets !== undefined
+        ? `${gs.rxPackets.toLocaleString("es-AR")} | ${(gs.rxLost ?? 0).toLocaleString("es-AR")}`
+        : "---");
+    setText("diagGsErrs", gs.rxCrcErrors !== null && gs.rxCrcErrors !== undefined
+        ? `${gs.rxCrcErrors} | ${gs.rxSizeErrors ?? 0}`
+        : "---");
+    const rebEl = $("diagTxReboots");
+    if (rebEl) {
+        const reb = gs.txReboots;
+        rebEl.textContent = reb !== null && reb !== undefined ? String(reb) : "---";
+        rebEl.style.color = (reb || 0) > 0 ? "var(--warn)" : "var(--ink)";
+    }
+    setText("diagGsUptime", gs.gsUptimeMs !== null && gs.gsUptimeMs !== undefined ? elapsed(gs.gsUptimeMs) : "---");
 
     // Color condicional en la pérdida de los últimos 5s (modal)
     const lossEl = $("diagLoss5s");
@@ -2047,6 +2758,17 @@ function renderLogs() {            // ~4 Hz
 
     if (Number(state.stats.invalid ?? 0) > 0) {
         alerts.push({ badge: "info", text: "Tramas con error de CRC", val: `${state.stats.invalid}` });
+    }
+    if (state.gs) {
+        if ((state.gs.txReboots ?? 0) > 0) {
+            alerts.push({ badge: "warn", text: "Reinicios TX cohete detectados", val: `${state.gs.txReboots}` });
+        }
+        if ((state.gs.rxSizeErrors ?? 0) > 0) {
+            alerts.push({ badge: "info", text: "Errores de tamaño LoRa (GS)", val: `${state.gs.rxSizeErrors}` });
+        }
+        if (state.gs.gsLinkActive === false) {
+            alerts.push({ badge: "crit", text: "Receptor GS sin enlace LoRa activo", val: "INACTIVO" });
+        }
     }
 
     const hasActiveAlerts = alerts.some(a => a.badge === "crit" || a.badge === "warn");
@@ -2163,14 +2885,15 @@ function renderCharts() {          // 10 Hz
         { data: state.hist.ax, color: "#b00020", lineWidth: 2.2 }
     ], 1, accSpan, true, accMin, accMax);
 
-    // Chart 3 (25% H): G-LOAD (axial accel, g) with a dashed 1 g reference series
-    const oneG = state.hist.ax.length >= 2
-        ? [{ t: state.hist.ax[0].t, v: 1 }, { t: state.hist.ax[state.hist.ax.length - 1].t, v: 1 }]
+    // Chart 3 (25% H): Carga G con signo (−2g a +16g) y referencia punteada en +1g
+    const oneG = state.hist.gTotal.length >= 2
+        ? [{ t: state.hist.gTotal[0].t, v: 1 }, { t: state.hist.gTotal[state.hist.gTotal.length - 1].t, v: 1 }]
         : [];
+    const gChartMax = Math.max(16, Math.ceil(state.maxTotalG || 16));
     drawChart("chVel", [
         { data: oneG, color: "#f59e0b", lineWidth: 1.6, dash: [6, 4] },
-        { data: state.hist.ax, color: "#b00020", lineWidth: 2.4 }
-    ], 1, accSpan, true, accMin, accMax);
+        { data: state.hist.gTotal, color: "#38bdf8", lineWidth: 2.4 }
+    ], 1, 4, true, -2, gChartMax);
 }
 
 /* ---------- selector de escala de gráficos ---------- */
@@ -2210,7 +2933,10 @@ function connect() {
         catch (error) { console.error("Mensaje WebSocket inválido", error); return; }
         if (message.type === "connection") setConnection(Boolean(message.connected));
         else if (message.type === "telemetry") ingest(message);
-        else if (message.type === "statistics") state.stats = { ...state.stats, ...(message.statistics || {}) };
+        else if (message.type === "statistics") {
+            state.stats = { ...state.stats, ...(message.statistics || {}) };
+            applyGsMeta(null, message.statistics || null, false);
+        }
     };
     state.socket.onerror = error => console.error("WebSocket telemetry error", error);
     state.socket.onclose = () => {
@@ -2228,7 +2954,10 @@ async function loadStatus() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const status = await response.json();
         setConnection(Boolean(status.connected));
-        if (status.statistics) state.stats = { ...state.stats, ...status.statistics };
+        if (status.statistics) {
+            state.stats = { ...state.stats, ...status.statistics };
+            applyGsMeta(null, status.statistics, true);
+        }
         if (status.charts) {
             if (!userSelectedScaleMode && status.charts.scaling_mode) {
                 CFG.charts.scaling_mode = status.charts.scaling_mode;

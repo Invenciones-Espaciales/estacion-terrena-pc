@@ -24,6 +24,9 @@ class TestStorageSDProtection(unittest.TestCase):
     def setUp(self):
         # Reset runtime state between tests
         main.runtime.demo_mode = False
+        main.runtime.frames_received = 0
+        main.runtime.last_frame = None
+        main.runtime.last_timestamp = None
         main.runtime.save_db_override = None
         main.runtime.save_csv_override = None
         main.runtime.audit_logs.clear()

@@ -332,13 +332,12 @@ def load_app_config() -> AppConfig:
     )
 
     manual_checklist = list(gonogo_data.get("manual_checklist", [
-        {"id": "ant_gs", "item": "Antena de GS instalada", "responsible": "Comunicaciones"},
-        {"id": "ant_rocket", "item": "Antena del cohete", "responsible": "Mecánica"},
-        {"id": "rocket_secured", "item": "Cohete asegurado", "responsible": "Mecánica"},
-        {"id": "area_clear", "item": "Área despejada", "responsible": "Operaciones"},
-        {"id": "rec_ready", "item": "Recuperación lista", "responsible": "Recuperación"},
-        {"id": "weather_check", "item": "Meteorología (<15 km/h)", "responsible": "Control de vuelo"},
-        {"id": "wiring_check", "item": "Cableado e ignitores", "responsible": "Mecánica"},
+        {"id": "propulsion", "item": "PROPULSIÓN", "responsible": "Propulsión"},
+        {"id": "avionica", "item": "AVIÓNICA", "responsible": "Aviónica"},
+        {"id": "recuperacion", "item": "RECUPERACIÓN", "responsible": "Recuperación"},
+        {"id": "estructuras", "item": "ESTRUCTURAS", "responsible": "Estructuras"},
+        {"id": "segmento_terreno", "item": "SEGMENTO TERRENO", "responsible": "Comunicaciones"},
+        {"id": "meteorologia", "item": "METEOROLOGÍA", "responsible": "Meteorología"},
     ]))
 
     gonogo_config = GoNoGoConfig(
@@ -698,6 +697,56 @@ class FrameParser:
 
 
 # ============================================================
+# GROUND STATION EXTENDED USB HEADER (32B GS + 65B ROCKET = 97B)
+# ============================================================
+
+GS_SYNC = b"\xAB"
+GS_HEADER_SIZE = 32
+GS_HEADER_STRUCT = struct.Struct("<B B h f I I I I I H H")
+assert GS_HEADER_STRUCT.size == GS_HEADER_SIZE
+
+
+def parse_gs_header(header_bytes: bytes) -> Optional[dict[str, Any]]:
+    """Decode and CRC-validate a 32-byte GroundStationHeader prepended over USB."""
+    if len(header_bytes) != GS_HEADER_SIZE or header_bytes[0:1] != GS_SYNC:
+        return None
+
+    expected_crc = int.from_bytes(header_bytes[30:32], byteorder="little")
+    if crc16_ccitt(header_bytes[:30]) != expected_crc:
+        return None
+
+    (
+        _gs_sync,
+        gs_flags,
+        rssi,
+        snr,
+        gs_uptime_ms,
+        rx_packets,
+        rx_lost,
+        rx_crc_errors,
+        rx_size_errors,
+        tx_reboots,
+        _gs_crc,
+    ) = GS_HEADER_STRUCT.unpack(header_bytes)
+
+    return {
+        "gs_proto_version": (gs_flags >> 4) & 0x0F,
+        "gs_flags": gs_flags,
+        "gs_rocket_crc_ok": bool(gs_flags & 0x01),
+        "gs_link_active": bool(gs_flags & 0x02),
+        "gs_tx_reboot": bool(gs_flags & 0x04),
+        "rssi": int(rssi),
+        "snr": round(float(snr), 2),
+        "gs_uptime_ms": int(gs_uptime_ms),
+        "rx_packets": int(rx_packets),
+        "rx_lost": int(rx_lost),
+        "rx_crc_errors": int(rx_crc_errors),
+        "rx_size_errors": int(rx_size_errors),
+        "tx_reboots": int(tx_reboots),
+    }
+
+
+# ============================================================
 # FRAME BUFFER & RESYNCHRONIZATION
 # ============================================================
 
@@ -707,39 +756,75 @@ class FrameBuffer:
         self.buffer = bytearray()
         self.invalid_frames = 0
         self.last_raw_frames: list[bytes] = []
+        self.last_gs_headers: list[Optional[dict[str, Any]]] = []
+        self.last_invalid_gs_events: list[dict[str, Any]] = []
         self.resyncing = False
 
     def feed(self, data: bytes) -> list[dict[str, Any]]:
         self.buffer.extend(data)
         frames: list[dict[str, Any]] = []
         self.last_raw_frames = []
+        self.last_gs_headers = []
+        self.last_invalid_gs_events = []
 
         frame_size = self.parser.config.frame_size
         sync = self.parser.config.sync
         min_frame_size = frame_size
+        usb_frame_size = GS_HEADER_SIZE + frame_size
 
         while True:
             if len(self.buffer) < min_frame_size:
                 break
 
-            # Search SYNC header if configured
+            # Detect earliest candidate between 97B GS-wrapped (0xAB) and legacy 65B (0xAA)
             if sync:
-                sync_index = self.buffer.find(sync)
-                if sync_index == -1:
-                    # Retain minimal bytes to detect SYNC split across UART chunks
+                idx_ab = self.buffer.find(GS_SYNC)
+                idx_aa = self.buffer.find(sync)
+
+                if idx_ab == -1 and idx_aa == -1:
                     keep = max(0, len(sync) - 1)
-                    if keep:
-                        self.buffer = self.buffer[-keep:]
-                    else:
-                        self.buffer.clear()
+                    self.buffer = self.buffer[-keep:] if keep else bytearray()
                     break
 
-                if sync_index > 0:
-                    del self.buffer[:sync_index]
+                # Prioritize whichever sync marker appears earlier in the stream
+                use_gs_wrapper = idx_ab != -1 and (idx_aa == -1 or idx_ab <= idx_aa)
+                if use_gs_wrapper:
+                    if idx_ab > 0:
+                        del self.buffer[:idx_ab]
+                    if len(self.buffer) < usb_frame_size:
+                        break
+
+                    raw_usb = bytes(self.buffer[:usb_frame_size])
+                    gs_meta = parse_gs_header(raw_usb[:GS_HEADER_SIZE])
+                    if gs_meta is not None:
+                        raw_rocket = raw_usb[GS_HEADER_SIZE:]
+                        del self.buffer[:usb_frame_size]
+                        self.resyncing = False
+
+                        cand_parsed = self.parser.parse(raw_rocket)
+                        if cand_parsed is not None:
+                            cand_parsed.update(gs_meta)
+                            frames.append(cand_parsed)
+                            self.last_raw_frames.append(raw_rocket)
+                            self.last_gs_headers.append(gs_meta)
+                        else:
+                            self.invalid_frames += 1
+                            self.last_invalid_gs_events.append(gs_meta)
+                        continue
+
+                    # False 0xAB byte: discard 1 byte and continue resynchronizing
+                    if not self.resyncing:
+                        self.invalid_frames += 1
+                    del self.buffer[:1]
+                    self.resyncing = True
+                    continue
+
+                if idx_aa > 0:
+                    del self.buffer[:idx_aa]
                     if len(self.buffer) < min_frame_size:
                         break
 
-            # Extract frame candidate
+            # Standard 65-byte frame path (0xAA without 0xAB GS wrapper)
             candidate_parsed = None
             candidate_size = 0
             raw_frame = None
@@ -756,17 +841,16 @@ class FrameBuffer:
                 del self.buffer[:candidate_size]
                 frames.append(candidate_parsed)
                 self.last_raw_frames.append(raw_frame)
+                self.last_gs_headers.append(None)
                 self.resyncing = False
             else:
                 if not self.resyncing:
                     self.invalid_frames += 1
 
                 if sync:
-                    # Discard first sync byte to advance sliding window and find genuine sync
                     del self.buffer[:len(sync)]
                     self.resyncing = True
                 elif self.parser.config.crc_type:
-                    # Slide 1 byte forward until recovered via CRC
                     del self.buffer[0]
                     self.resyncing = True
                 else:
@@ -787,9 +871,26 @@ class PacketStatistics:
         self.lost = 0
         self.invalid = 0
         self.last_sequence: Optional[int] = None
+        self.gs_stats: Optional[dict[str, Any]] = None
+
+    def update_gs_stats(self, gs_data: Optional[dict[str, Any]]):
+        if gs_data is not None and "rx_packets" in gs_data:
+            self.gs_stats = {
+                "rssi": gs_data.get("rssi"),
+                "snr": gs_data.get("snr"),
+                "gs_uptime_ms": gs_data.get("gs_uptime_ms"),
+                "rx_packets": gs_data.get("rx_packets"),
+                "rx_lost": gs_data.get("rx_lost"),
+                "rx_crc_errors": gs_data.get("rx_crc_errors"),
+                "rx_size_errors": gs_data.get("rx_size_errors"),
+                "tx_reboots": gs_data.get("tx_reboots"),
+                "gs_link_active": gs_data.get("gs_link_active"),
+                "gs_rocket_crc_ok": gs_data.get("gs_rocket_crc_ok"),
+            }
 
     def register(self, frame: dict[str, Any]):
         self.received += 1
+        self.update_gs_stats(frame)
         if not self.sequence_field or self.sequence_field not in frame:
             return
 
@@ -813,6 +914,7 @@ class PacketStatistics:
             "lost": self.lost,
             "invalid": self.invalid,
             "loss_percent": loss_percent,
+            "gs": self.gs_stats,
         }
 
     def reset(self):
@@ -820,6 +922,7 @@ class PacketStatistics:
         self.lost = 0
         self.invalid = 0
         self.last_sequence = None
+        self.gs_stats = None
 
 
 # ============================================================
@@ -851,6 +954,8 @@ class Database:
         "pin_frenado_label",
         "pin_principal",
         "pin_principal_label",
+        "rssi",
+        "snr",
     )
 
     def __init__(self, path: str):
@@ -900,10 +1005,16 @@ class Database:
                 pin_frenado INTEGER,
                 pin_frenado_label TEXT,
                 pin_principal INTEGER,
-                pin_principal_label TEXT
+                pin_principal_label TEXT,
+                rssi INTEGER,
+                snr REAL
             )
             """
         )
+        if existing_cols:
+            for col_name, col_type in (("rssi", "INTEGER"), ("snr", "REAL")):
+                if col_name not in existing_cols:
+                    self.connection.execute(f"ALTER TABLE telemetry ADD COLUMN {col_name} {col_type};")
         self.connection.execute(
             """
             CREATE INDEX IF NOT EXISTS idx_telemetry_received_at
@@ -1337,15 +1448,44 @@ async def process_frame(frame: dict[str, Any], raw_frame: Optional[bytes] = None
 # ============================================================
 
 class SerialProtocol(asyncio.Protocol):
+    HANDSHAKE_RETRY_S = 0.4
+    KEEPALIVE_INTERVAL_S = 2.0
+
     def __init__(self, loop):
         self.loop = loop
         self.transport = None
         self.disconnected = asyncio.Event()
+        self.binary_locked = False
+        self._last_cmd_mono = 0.0
+        self._keepalive_task: Optional[asyncio.Task] = None
+
+    def send_mode_command(self, cmd: bytes) -> bool:
+        if self.transport is None or self.transport.is_closing():
+            return False
+        try:
+            self.transport.write(cmd)
+            self._last_cmd_mono = time.monotonic()
+            return True
+        except Exception:
+            logger.debug("Failed writing UART mode command %r", cmd)
+            return False
+
+    async def _keepalive_loop(self):
+        while not self.disconnected.is_set():
+            interval = self.KEEPALIVE_INTERVAL_S if self.binary_locked else self.HANDSHAKE_RETRY_S
+            try:
+                await asyncio.wait_for(self.disconnected.wait(), timeout=interval)
+                break
+            except asyncio.TimeoutError:
+                self.send_mode_command(b"B\n")
 
     def connection_made(self, transport):
         self.transport = transport
+        self.binary_locked = False
         runtime.connected = True
-        logger.info("UART interface connected")
+        logger.info("UART interface connected (sending 'B' handshake for 97B Binary mode)")
+        self.send_mode_command(b"B\n")
+        self._keepalive_task = create_background_task(self._keepalive_loop())
         create_background_task(websocket_manager.broadcast({"type": "connection", "connected": True}))
 
     def data_received(self, data: bytes):
@@ -1358,10 +1498,19 @@ class SerialProtocol(asyncio.Protocol):
             previous_invalid = statistics.invalid
             statistics.invalid = frame_buffer.invalid_frames
 
+            if any(gs_h is not None for gs_h in frame_buffer.last_gs_headers):
+                self.binary_locked = True
+
+            if frame_buffer.last_invalid_gs_events:
+                self.binary_locked = True
+                statistics.update_gs_stats(frame_buffer.last_invalid_gs_events[-1])
+
             for frame, raw_frame in zip(frames, frame_buffer.last_raw_frames):
                 create_background_task(process_frame(frame, raw_frame))
 
             if statistics.invalid > previous_invalid:
+                if not self.binary_locked and (time.monotonic() - self._last_cmd_mono) >= 0.15:
+                    self.send_mode_command(b"B\n")
                 create_background_task(
                     websocket_manager.broadcast({
                         "type": "statistics",
@@ -1373,12 +1522,15 @@ class SerialProtocol(asyncio.Protocol):
 
     def connection_lost(self, exc):
         runtime.connected = False
+        self.binary_locked = False
         if exc:
             logger.error("UART disconnected | exception=%r (%s)", exc, type(exc).__name__)
         else:
             logger.warning("UART disconnected | normal closure")
 
         self.disconnected.set()
+        if self._keepalive_task is not None and not self._keepalive_task.done():
+            self._keepalive_task.cancel()
         create_background_task(websocket_manager.broadcast({"type": "connection", "connected": False}))
 
 
@@ -1423,6 +1575,7 @@ def resolve_serial_port(configured_port: str) -> str:
 
 async def demo_telemetry_loop():
     """Generates synthetic 290-second flight kinematics at 10 Hz in RAM without serial hardware or disk I/O."""
+    import math
     runtime.connected = True
     runtime.active_serial_port = "SIMULADOR_DEMO (10 Hz)"
     logger.info("Demo telemetry loop started @ 10 Hz from t=%.1fs (pure RAM generation, SD card writes disabled)", runtime.demo_time)
@@ -1462,7 +1615,7 @@ async def demo_telemetry_loop():
                 status = 16
             elif t_mod < 208.0:
                 status = 32
-            elif t_mod < 226.0:
+            elif t_mod < 246.0:
                 status = 64
             else:
                 status = 128
@@ -1481,22 +1634,25 @@ async def demo_telemetry_loop():
                 pin_principal = 0
             elif t_mod < 154.0:
                 tau = t_mod - 150.0
-                az = 4.5
-                vz = 45.0 * tau
-                alt = 0.5 * 45.0 * (tau ** 2)
-                ax = 0.1
-                ay = -0.05
-                gx = 0.5
+                # Realistic solid-motor thrust curve peaking at 15.0g near liftoff
+                az = 1.0 + 14.0 * math.sin(math.pi * ((tau / 4.0) ** 0.65))
+                vz = 28.85 * tau
+                alt = 0.5 * 28.85 * (tau ** 2)
+                ax = 0.15
+                ay = -0.08
+                gx = 0.6
                 gy = -0.3
-                gz = 15.0
+                gz = 18.0
                 speed = vz * 0.1
                 pin_frenado = 0
                 pin_principal = 0
             elif t_mod < 176.0:
                 tau = t_mod - 154.0
-                az = -1.0
-                vz = max(0.0, 180.0 - 8.18 * tau)
-                alt = min(1500.0, 360.0 + 180.0 * tau - 0.5 * 8.18 * (tau ** 2))
+                norm = tau / 22.0
+                # Aerodynamic drag deceleration dipping to -1.8g after burnout, relaxing toward 0g at apogee
+                az = -1.8 * ((1.0 - norm) ** 1.4)
+                vz = max(0.0, 115.4 * (1.0 - norm))
+                alt = 230.8 + (1500.0 - 230.8) * (1.0 - (1.0 - norm) ** 2)
                 ax = 0.02
                 ay = -0.02
                 gx = 0.2
@@ -1507,9 +1663,10 @@ async def demo_telemetry_loop():
                 pin_principal = 0
             elif t_mod < 206.0:
                 tau = t_mod - 176.0
-                az = 1.0
-                vz = -25.0
-                alt = max(400.0, 1500.0 - 36.6 * tau)
+                # Brief drogue opening shock (~3.8g), then steady 1.0g drogue descent to 220m
+                az = (1.0 + 2.8 * math.sin(math.pi * (tau / 1.2))) if tau < 1.2 else 1.0
+                vz = -42.7
+                alt = max(220.0, 1500.0 - (1280.0 / 30.0) * tau)
                 ax = 0.05
                 ay = 0.02
                 gx = 0.4
@@ -1518,17 +1675,24 @@ async def demo_telemetry_loop():
                 speed = 8.5
                 pin_frenado = 1
                 pin_principal = 0
-            elif t_mod < 226.0:
+            elif t_mod < 246.0:
                 tau = t_mod - 206.0
-                az = 1.0
-                vz = -5.0
-                alt = max(0.0, 400.0 - 20.0 * tau)
+                norm = min(1.0, tau / 40.0)
+                # Brief main chute opening shock (~2.6g), steady 1.0g descent, gentle 1.6g soft touchdown
+                if tau < 1.5:
+                    az = 1.0 + 1.6 * math.sin(math.pi * (tau / 1.5))
+                elif tau >= 39.4:
+                    az = 1.0 + 0.6 * math.sin(math.pi * ((tau - 39.4) / 0.6))
+                else:
+                    az = 1.0
+                alt = max(0.0, 220.0 * ((1.0 - norm) ** 1.15))
+                vz = -6.3 * ((1.0 - norm) ** 0.15)
                 ax = 0.01
                 ay = 0.01
                 gx = 0.1
                 gy = -0.1
-                gz = 1.0
-                speed = 3.5
+                gz = 0.8
+                speed = 2.5
                 pin_frenado = 1
                 pin_principal = 1
             else:
@@ -1547,6 +1711,9 @@ async def demo_telemetry_loop():
             press = round(BASE_PRESS - (alt / 8.3), 2)
             lat = BASE_LAT + (alt * 0.0000008)
             lon = BASE_LON + (alt * 0.0000012)
+            demo_rssi = int(round(-56 - (alt / 45.0)))
+            demo_snr = round(10.5 - (alt / 130.0), 2)
+            demo_rx = runtime.frames_received + 1
 
             frame = {
                 "sync": 0xAA,
@@ -1569,6 +1736,19 @@ async def demo_telemetry_loop():
                 "ground_speed": round(speed, 1),
                 "pin_frenado": pin_frenado,
                 "pin_principal": pin_principal,
+                "gs_proto_version": 1,
+                "gs_flags": 0x13,
+                "gs_rocket_crc_ok": True,
+                "gs_link_active": True,
+                "gs_tx_reboot": False,
+                "rssi": demo_rssi,
+                "snr": demo_snr,
+                "gs_uptime_ms": now_ms,
+                "rx_packets": demo_rx,
+                "rx_lost": 0,
+                "rx_crc_errors": 0,
+                "rx_size_errors": 0,
+                "tx_reboots": 0,
             }
 
             if frame_config is not None:
@@ -1617,6 +1797,7 @@ async def serial_loop():
             continue
 
         transport = None
+        protocol = None
         target_port = resolve_serial_port(app_config.serial.port)
         runtime.active_serial_port = target_port
         try:
@@ -1636,7 +1817,9 @@ async def serial_loop():
             logger.info("UART port '%s' opened successfully", target_port)
             await protocol.disconnected.wait()
         except asyncio.CancelledError:
-            logger.info("Serial loop cancelled")
+            logger.info("Serial loop cancelled (restoring ESP32 to 'H' Human-Readable mode)")
+            if protocol is not None:
+                protocol.send_mode_command(b"H\n")
             if transport is not None:
                 transport.close()
             raise
@@ -2193,9 +2376,19 @@ async def startup():
         csv_logger = CSVLogger(
             app_config.storage.csv,
             [
-                out_name
-                for ff in frame_config.fields
-                for out_name in ([ff.name, f"{ff.name}_label"] if ff.values else [ff.name])
+                *[
+                    out_name
+                    for ff in frame_config.fields
+                    for out_name in ([ff.name, f"{ff.name}_label"] if ff.values else [ff.name])
+                ],
+                "rssi",
+                "snr",
+                "gs_uptime_ms",
+                "rx_packets",
+                "rx_lost",
+                "rx_crc_errors",
+                "rx_size_errors",
+                "tx_reboots",
             ],
         )
         gonogo_csv_path = Path(app_config.storage.csv).parent / "gonogo_audit.csv"

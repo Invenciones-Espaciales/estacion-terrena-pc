@@ -15,37 +15,46 @@
 /* ===== APP LAYOUT (100VH GRID EN ESCRITORIO) ===== */
 .app {
     height: 100vh;
-    padding: 6px 10px;
+    padding: 6px 8px;
     display: grid;
-    grid-template-rows: 42px auto minmax(0, 1fr);
-    gap: 8px;
+    grid-template-rows: 46px auto minmax(0, 1fr);
+    gap: 6px;
     box-sizing: border-box;
     overflow: hidden;
 }
 
-/* ===== HERO GUIDANCE BANNER ===== */
+/* ===== HERO GUIDANCE BANNER (FLAT FLUSH HAIRLINES) ===== */
 .hero-guidance {
     flex: none;
-    border: 2px solid var(--border);
-    border-radius: 4px;
-    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 6px 12px;
     background: var(--card);
     display: grid;
-    grid-template-columns: 1fr 1fr 1.1fr auto;
+    grid-template-columns: 0.95fr 1fr 1.45fr auto;
     align-items: center;
-    gap: 16px;
+    gap: 0;
 }
 
 .guidance-box {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    padding: 0 12px;
+    border-right: 1px solid var(--soft-border);
+    min-width: 0;
+}
+.guidance-box:first-child {
+    padding-left: 0;
+}
+.guidance-box:nth-of-type(3) {
+    border-right: none;
 }
 .guidance-box .lbl {
-    font-size: 11px;
-    font-weight: 900;
+    font-size: 12px;
+    font-weight: 700;
     color: var(--gray);
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     display: flex;
     align-items: center;
@@ -57,19 +66,21 @@
     gap: 6px;
 }
 .guidance-box .big {
-    font-size: 28px;
-    font-weight: 950;
+    font-size: 32px;
+    font-weight: 800;
+    font-family: var(--font-mono);
     line-height: 1.05;
     color: var(--ink);
 }
 .guidance-box .unit {
-    font-size: 15px;
-    font-weight: 900;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: var(--font-mono);
     color: var(--gray);
 }
 .guidance-box .sub {
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
     color: var(--gray);
 }
 
@@ -79,9 +90,9 @@
     gap: 10px;
 }
 .compass-dial {
-    width: 40px;
-    height: 40px;
-    border: 2px solid var(--border);
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--border);
     border-radius: 50%;
     background: var(--soft);
     position: relative;
@@ -91,52 +102,61 @@
     flex-shrink: 0;
 }
 .compass-arrow {
-    width: 3px;
-    height: 26px;
-    background: var(--bad);
-    border-radius: 2px;
+    width: 2px;
+    height: 22px;
+    background: var(--accent);
+    border-radius: 1px;
     transform-origin: center center;
     transition: transform 0.25s ease;
 }
 .compass-center {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     background: var(--ink);
     border-radius: 50%;
     position: absolute;
 }
 
-/* BOTONES DE ACCION DIRECTA */
+/* BOTONES DE ACCION DIRECTA (COMPACTOS) */
 .action-buttons {
     display: flex;
-    flex-direction: row;
-    gap: 8px;
-    align-items: center;
+    flex-direction: column;
+    gap: 4px;
+    align-items: stretch;
+    padding-left: 10px;
+    border-left: 1px solid var(--soft-border);
 }
 .btn-action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 8px 14px;
-    font-size: 12px;
-    font-weight: 950;
+    gap: 5px;
+    padding: 5px 10px;
+    font-size: 11.5px;
+    font-weight: 800;
     letter-spacing: 0.04em;
-    border: 2px solid var(--border);
-    border-radius: 4px;
-    background: var(--accent);
-    color: #000000;
+    text-transform: uppercase;
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 2px;
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--accent);
     cursor: pointer;
     white-space: nowrap;
-    transition: filter 0.1s ease, transform 0.05s ease;
+    transition: background 0.12s ease, border-color 0.12s ease, transform 0.05s ease;
 }
-.btn-action:hover { filter: brightness(1.1); }
+.btn-action:hover {
+    background: rgba(56, 189, 248, 0.20);
+    border-color: var(--accent);
+}
 .btn-action.sec {
     background: var(--soft);
     color: var(--ink);
-    border: 2px solid var(--border);
+    border: 1px solid var(--border);
 }
-.btn-action.sec:hover { background: var(--soft-border); }
+.btn-action.sec:hover {
+    background: var(--border-light);
+    border-color: var(--accent);
+}
 
 /* ===== MAIN CONTENT GRID (COL-7 MAPA + COL-5 PANELES LATERALES) ===== */
 .recovery-grid {
@@ -144,31 +164,31 @@
     min-height: 0;
     display: grid;
     grid-template-columns: 7fr 5fr;
-    gap: 8px;
+    gap: 6px;
 }
 
 .panel-map {
     display: flex;
     flex-direction: column;
-    border: 2px solid var(--border);
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
     background: var(--card);
     min-height: 0;
     overflow: hidden;
 }
 .panel-header {
     flex: none;
-    padding: 6px 12px;
-    border-bottom: 2px solid var(--border);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
     background: var(--soft);
 }
 .panel-title {
-    font-size: 13px;
-    font-weight: 950;
-    letter-spacing: 0.05em;
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     display: flex;
     align-items: center;
@@ -177,20 +197,23 @@
 }
 .map-controls {
     display: flex;
-    gap: 6px;
+    gap: 4px;
 }
 .map-btn {
-    padding: 4px 10px;
+    padding: 4px 11px;
     font-size: 11.5px;
-    font-weight: 900;
-    border: 1.5px solid var(--border);
-    border-radius: 3px;
+    font-weight: 700;
+    border: 1px solid var(--border);
+    border-radius: 2px;
     background: var(--card);
     color: var(--ink);
     cursor: pointer;
-    transition: background 0.1s ease;
+    transition: background 0.1s ease, border-color 0.1s ease;
 }
-.map-btn:hover { background: var(--soft-border); }
+.map-btn:hover {
+    background: var(--border-light);
+    border-color: var(--accent);
+}
 
 #recoveryMap {
     flex: 1 1 0;
@@ -198,31 +221,31 @@
     min-height: 180px;
 }
 
-/* PANEL LATERAL DERECHO (COL-5 — HIGH LEGIBILITY) */
+/* PANEL LATERAL DERECHO (COL-5 — HAIRLINE INSTRUMENTATION) */
 .side-panel {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     min-height: 0;
     overflow: hidden;
 }
 
 .card {
-    border: 2px solid var(--border);
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
     background: var(--card);
-    padding: 8px 12px;
+    padding: 6px 10px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     flex-shrink: 0;
 }
 .card-title {
-    font-size: 13px;
-    font-weight: 950;
+    font-size: 13.5px;
+    font-weight: 800;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    border-bottom: 2px solid var(--border-light);
+    border-bottom: 1px solid var(--soft-border);
     padding-bottom: 4px;
     margin-bottom: 2px;
     display: flex;
@@ -231,57 +254,124 @@
     color: var(--ink);
 }
 
+/* RSSI Proximity Signal Bar in RF Beacon Card */
+.rec-rssi-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 4px 0 2px 0;
+}
+.rec-rssi-scale {
+    position: relative;
+    height: 15px;
+    width: 100%;
+    font-size: 11.5px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--gray);
+}
+.rec-rssi-scale span {
+    position: absolute;
+    top: 0;
+    line-height: 1;
+    white-space: nowrap;
+}
+.rec-rssi-track {
+    position: relative;
+    height: 11px;
+    background: var(--soft-border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.rec-rssi-fill {
+    height: 100%;
+    width: 0%;
+    background: #16a34a;
+    border-radius: 2px;
+    transition: width 0.2s ease, background-color 0.2s ease;
+}
+.rec-rssi-fill.warn { background: #d97706; }
+.rec-rssi-fill.bad { background: #dc2626; }
+.rec-rssi-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--ink);
+    opacity: 0.25;
+    z-index: 2;
+    pointer-events: none;
+}
+
 /* HERO COORDINATE BOXES IN CARD 1 */
 .hero-coords-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 0;
+    border-bottom: 1px solid var(--soft-border);
 }
 .coord-box {
-    background: var(--soft);
-    border: 1.5px solid var(--soft-border);
-    border-radius: 4px;
-    padding: 6px 10px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--soft-border);
+    border-radius: 0;
+    padding: 4px 8px 6px 2px;
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
+.coord-box:last-child {
+    border-right: none;
+    padding-left: 10px;
+}
 .coord-box .k {
-    font-size: 11px;
-    font-weight: 900;
+    font-size: 13px;
+    font-weight: 800;
     color: var(--gray);
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 .coord-box .v {
-    font-size: 21px;
-    font-weight: 950;
-    color: var(--accent);
+    font-size: 23px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--ink);
     line-height: 1.1;
 }
 
 .sub-metrics-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
+    gap: 0;
 }
 .sub-metric-cell {
-    background: var(--soft);
-    border: 1px solid var(--soft-border);
-    border-radius: 3px;
-    padding: 4px 8px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--soft-border);
+    border-radius: 0;
+    padding: 4px 6px;
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
+}
+.sub-metric-cell:first-child {
+    padding-left: 2px;
+}
+.sub-metric-cell:last-child {
+    border-right: none;
 }
 .sub-metric-cell .k {
-    font-size: 10px;
-    font-weight: 900;
+    font-size: 11px;
+    font-weight: 700;
     color: var(--gray);
+    letter-spacing: 0.03em;
     white-space: nowrap;
 }
 .sub-metric-cell .v {
-    font-size: 15.5px;
-    font-weight: 950;
+    font-size: 16px;
+    font-weight: 800;
+    font-family: var(--font-mono);
     color: var(--ink);
     white-space: nowrap;
 }
@@ -289,25 +379,28 @@
 .base-metrics-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 0.8fr;
-    gap: 6px;
+    gap: 0;
+    border-top: 1px solid var(--soft-border);
+    padding-top: 4px;
     margin-top: 2px;
 }
 
 .status-badge {
     display: inline-block;
-    padding: 3px 9px;
-    font-size: 12.5px;
-    font-weight: 950;
-    letter-spacing: 0.04em;
-    border: 1.5px solid var(--border);
-    border-radius: 3px;
-    background: #0f172a;
-    color: #fff;
+    padding: 2.5px 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: var(--soft);
+    color: var(--ink);
     text-align: center;
 }
-.status-badge.ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
-.status-badge.warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
-.status-badge.crit { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+.status-badge.ok { background: #16a34a; color: #ffffff; border-color: #15803d; }
+.status-badge.warn { background: #d97706; color: #ffffff; border-color: #b45309; }
+.status-badge.crit { background: #dc2626; color: #ffffff; border-color: #b91c1c; }
 
 /* LISTA DE HITOS */
 .timeline-scroll {
@@ -316,26 +409,27 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
 }
 .tl-item {
     display: flex;
     align-items: baseline;
     gap: 8px;
     padding: 5px 8px;
-    border-left: 4px solid var(--accent);
+    border-left: 2px solid var(--accent);
     background: var(--soft);
-    border-radius: 0 3px 3px 0;
-    font-size: 13.5px;
+    border-radius: 0 2px 2px 0;
+    font-size: 13px;
 }
 .tl-time {
-    font-weight: 950;
+    font-weight: 800;
+    font-family: var(--font-mono);
     white-space: nowrap;
     color: var(--accent);
     flex-shrink: 0;
 }
 .tl-label {
-    font-weight: 800;
+    font-weight: 600;
     color: var(--ink);
     min-width: 0;
     word-break: break-word;
@@ -346,14 +440,14 @@
     position: fixed;
     bottom: 18px;
     right: 18px;
-    padding: 10px 18px;
-    background: #0f172a;
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 900;
-    border: 2px solid #ffffff;
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    padding: 8px 14px;
+    background: var(--card);
+    color: var(--ink);
+    font-size: 11.5px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
@@ -397,17 +491,26 @@
         padding: 8px !important;
     }
 
+    .hero-guidance .guidance-box {
+        border-right: none !important;
+        padding: 4px !important;
+    }
+
     .action-buttons {
         grid-column: 1 / -1 !important;
         display: flex !important;
         flex-direction: row !important;
         gap: 6px !important;
+        padding-left: 0 !important;
+        border-left: none !important;
+        border-top: 1px solid var(--soft-border) !important;
+        padding-top: 8px !important;
     }
 
     .action-buttons .btn-action {
         flex: 1 1 0 !important;
         padding: 8px 4px !important;
-        font-size: 11px !important;
+        font-size: 10.5px !important;
         text-align: center !important;
     }
 
@@ -432,7 +535,7 @@
     }
 
     .panel-title {
-        font-size: 12px !important;
+        font-size: 11px !important;
     }
 
     .map-controls {
@@ -466,6 +569,14 @@
 
     .sub-metrics-grid {
         grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+    }
+
+    .sub-metrics-grid .sub-metric-cell {
+        border: 1px solid var(--soft-border) !important;
+        background: var(--soft) !important;
+        border-radius: 2px !important;
+        padding: 5px 8px !important;
     }
 
     .card {
@@ -512,7 +623,7 @@
                 <a href="/recovery" class="nav-tab active">RECUPERACIÓN</a>
             </nav>
             <button type="button" class="theme-toggle" id="btnThemeToggle" title="Alternar modo oscuro / claro" aria-label="Alternar modo oscuro / claro">
-                <span class="theme-icon" id="themeIcon">🌙</span>
+                <span class="theme-icon" id="themeIcon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
                 <span class="theme-label" id="themeLabel">OSCURO</span>
             </button>
         </div>
@@ -520,8 +631,6 @@
         <div class="hgroup">
             <div class="hcell"><span class="k">HORA LOCAL</span><span class="v clock num" id="localTime">00:00:00</span></div>
             <div class="hcell"><span class="k">TIEMPO DE MISIÓN</span><span class="v clock num">T+ <span id="clock">00:00:00</span></span></div>
-            <div class="hcell"><span class="k">FASE DE VUELO</span><span class="phase" id="phase">---</span></div>
-            <div class="hcell"><span class="k">SEÑAL RF (RSSI)</span><span class="v num nd" id="rssi">N/D</span></div>
             <div class="hcell"><span class="k">ENLACE</span><span class="v" style="font-size:15px"><span class="dot" id="linkDot"></span><span id="linkStatus">DESCONECTADO</span></span></div>
         </div>
     </header>
@@ -565,27 +674,29 @@
         </div>
 
         <div class="guidance-box">
-            <div class="lbl">ESTADO DE ATERRIZAJE</div>
-            <div style="display:flex; align-items:center; gap:10px; margin-top:2px;">
+            <div class="lbl" style="justify-content: space-between; width: 100%;">
+                <span>ESTADO &amp; VZ IMPACTO</span>
                 <span class="status-badge" id="landingBadge">DESCONOCIDO</span>
-                <span class="sub">Vz Impacto: <strong class="num" style="font-size:15px; color:var(--ink);" id="touchdownVz">--- m/s</strong></span>
+            </div>
+            <div class="val-wrap" style="margin-top: 2px;">
+                <span class="big num" id="touchdownVz" style="font-size: clamp(24px, 2.2vw, 32px);">--- m/s</span>
             </div>
         </div>
 
         <div class="action-buttons">
-            <button class="btn-action" id="btnGoogleMaps">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <button class="btn-action" id="btnGoogleMaps" title="Abrir ubicación en Google Maps">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                     <circle cx="12" cy="10" r="3"/>
                 </svg>
-                ABRIR EN GOOGLE MAPS
+                GOOGLE MAPS
             </button>
-            <button class="btn-action sec" id="btnCopyCoords">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <button class="btn-action sec" id="btnCopyCoords" title="Copiar coordenadas actuales">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                 </svg>
-                COPIAR COORDENADAS
+                COPIAR COORD.
             </button>
         </div>
     </section>
@@ -614,13 +725,60 @@
             <div id="recoveryMap"></div>
         </section>
 
-        <!-- PANEL LATERAL DERECHO (5fr — 3 TARJETAS CONSOLIDADAS) -->
+        <!-- PANEL LATERAL DERECHO (5fr — RF PRIORITARIO + GPS + RECUPERACIÓN) -->
         <section class="side-panel">
 
-            <!-- 1. COORDENADAS DEL VEHÍCULO & TELEMETRÍA GPS -->
+            <!-- 1. ENLACE RF & BALIZA DE RECUPERACIÓN (PRIORIDAD MÁXIMA) -->
             <div class="card">
                 <div class="card-title">
-                    <span>1. POSICIÓN GPS DEL VEHÍCULO</span>
+                    <span>1. ENLACE RF &amp; BALIZA</span>
+                </div>
+
+                <div class="hero-coords-grid">
+                    <div class="coord-box">
+                        <span class="k">RSSI (SEÑAL RF)</span>
+                        <span class="v num" id="recRfRssi" style="font-size: clamp(24px, 2.2vw, 32px);">--- dBm</span>
+                    </div>
+                    <div class="coord-box">
+                        <span class="k">SNR (REL. SEÑAL/RUIDO)</span>
+                        <span class="v num" id="recRfSnr" style="font-size: clamp(24px, 2.2vw, 32px);">--- dB</span>
+                    </div>
+                </div>
+
+                <div class="rec-rssi-bar-wrap">
+                    <div class="rec-rssi-track">
+                        <div class="rec-rssi-fill" id="recRssiBarFill"></div>
+                        <div class="rec-rssi-tick" style="left: 31.25%;"></div>
+                        <div class="rec-rssi-tick" style="left: 56.25%;"></div>
+                    </div>
+                    <div class="rec-rssi-scale">
+                        <span style="left: 0%;">−120 dBm</span>
+                        <span style="left: 31.25%; transform: translateX(-50%);">−95</span>
+                        <span style="left: 56.25%; transform: translateX(-50%);">−75</span>
+                        <span style="right: 0%;">−40 dBm</span>
+                    </div>
+                </div>
+
+                <div class="sub-metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="sub-metric-cell">
+                        <span class="k">PAQUETES RX</span>
+                        <span class="v num" id="recRfRx">0</span>
+                    </div>
+                    <div class="sub-metric-cell">
+                        <span class="k">PERDIDOS</span>
+                        <span class="v num" id="recRfLost">0</span>
+                    </div>
+                    <div class="sub-metric-cell">
+                        <span class="k">ÚLTIMA TRAMA</span>
+                        <span class="v num" id="recLastTime">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. COORDENADAS DEL VEHÍCULO & TELEMETRÍA GPS -->
+            <div class="card">
+                <div class="card-title">
+                    <span>2. POSICIÓN GPS DEL VEHÍCULO</span>
                     <span class="status-badge ok" id="fixBadge">GPS FIX</span>
                 </div>
 
@@ -635,7 +793,7 @@
                     </div>
                 </div>
 
-                <div class="sub-metrics-grid">
+                <div class="sub-metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
                     <div class="sub-metric-cell">
                         <span class="k">ALTITUD GPS</span>
                         <span class="v num" id="recAlt">--- m</span>
@@ -648,18 +806,14 @@
                         <span class="k">SATÉLITES</span>
                         <span class="v num" id="recSats">--</span>
                     </div>
-                    <div class="sub-metric-cell">
-                        <span class="k">ÚLTIMO DATO</span>
-                        <span class="v num" id="recLastTime">--</span>
-                    </div>
                 </div>
             </div>
 
-            <!-- 2. PIROTECNIA DE RECUPERACIÓN Y ORIGEN DE BASE -->
+            <!-- 3. PIROTECNIA DE RECUPERACIÓN -->
             <div class="card">
                 <div class="card-title">
-                    <span>2. RECUPERACIÓN Y ORIGEN DE RAMPA</span>
-                    <span style="font-size:11px;font-weight:900;color:var(--gray)">PARACAÍDAS & BASE</span>
+                    <span>3. RECUPERACIÓN Y PARACAÍDAS</span>
+                    <span class="k" style="font-size:12px;font-weight:800;color:var(--gray)">ELEVACIÓN: <strong class="num" id="elevAngle" style="color:var(--ink);">---°</strong></span>
                 </div>
 
                 <div class="annun-grid">
@@ -672,28 +826,13 @@
                         <div class="annun-state" id="annunMainState">[0: EN ESPERA]</div>
                     </div>
                 </div>
-
-                <div class="base-metrics-grid">
-                    <div class="sub-metric-cell">
-                        <span class="k">BASE LATITUD</span>
-                        <span class="v num" id="baseLat">---</span>
-                    </div>
-                    <div class="sub-metric-cell">
-                        <span class="k">BASE LONGITUD</span>
-                        <span class="v num" id="baseLon">---</span>
-                    </div>
-                    <div class="sub-metric-cell">
-                        <span class="k">ELEVACIÓN</span>
-                        <span class="v num" id="elevAngle">---°</span>
-                    </div>
-                </div>
             </div>
 
-            <!-- 3. CRONOLOGÍA DE VUELO -->
+            <!-- 4. CRONOLOGÍA DE VUELO -->
             <div class="card" style="flex:1 1 0; min-height:0;">
                 <div class="card-title">
-                    <span>3. CRONOLOGÍA DE HITOS DE VUELO</span>
-                    <span id="eventsCount" style="font-size:11.5px;font-weight:900;color:var(--gray)">0 eventos</span>
+                    <span>4. CRONOLOGÍA DE HITOS DE VUELO</span>
+                    <span id="eventsCount" style="font-size:11.5px;font-weight:700;color:var(--gray)">0 eventos</span>
                 </div>
                 <div class="timeline-scroll" id="timelineList">
                     <div style="color:var(--muted);font-style:italic;padding:4px 0;font-size:13px;">Esperando hitos de vuelo...</div>
@@ -719,6 +858,25 @@
 
 <script>
 "use strict";
+
+const STATUS_LABELS = {
+    0x00: "STANDBY",
+    0x01: "POWERED",
+    0x02: "BURNOUT",
+    0x03: "BURNOUT",
+    0x04: "APOGEE",
+    0x07: "APOGEE",
+    0x08: "DROGUE_ORD",
+    0x0F: "DROGUE_ORD",
+    0x10: "DROGUE_CONF",
+    0x1F: "DROGUE_CONF",
+    0x20: "MAIN_ORD",
+    0x3F: "MAIN_ORD",
+    0x40: "MAIN_CONF",
+    0x7F: "MAIN_CONF",
+    0x80: "LANDED",
+    0xFF: "LANDED"
+};
 
 const packetTracker = new PacketTracker(5000);
 
@@ -747,6 +905,9 @@ const recoveryState = {
     pinPrincipal: null,
     satellites: null,
     rssi: null,
+    snr: null,
+    gs: null,
+    lastTxReboots: null,
     lastSeq: null,
     lossPercent: 0,
     maxAlt: 0,
@@ -887,6 +1048,21 @@ function updateRecoveryMap() {
     }
 }
 
+function applyRecoveryGsMeta(d = null, stats = null, isHistory = false) {
+    if (typeof window.extractGsMeta !== "function") return;
+    const gs = window.extractGsMeta(d, stats);
+    if (gs.rssi !== null) recoveryState.rssi = gs.rssi;
+    if (gs.snr !== null) recoveryState.snr = gs.snr;
+    recoveryState.gs = { ...(recoveryState.gs || {}), ...Object.fromEntries(Object.entries(gs).filter(([, v]) => v !== null)) };
+    if (!isHistory && gs.txReboots !== null) {
+        const rebooted = gs.gsTxReboot === true || (recoveryState.lastTxReboots !== null && gs.txReboots > recoveryState.lastTxReboots);
+        if (rebooted) {
+            addEvent(`Reinicio detectado en TX cohete (#${gs.txReboots})`);
+        }
+        recoveryState.lastTxReboots = gs.txReboots;
+    }
+}
+
 /* INGESTA DE TRAMAS */
 function ingestFrame(frameItem, isHistory = false) {
     const d = frameItem.data || frameItem.telemetry || frameItem;
@@ -908,7 +1084,7 @@ function ingestFrame(frameItem, isHistory = false) {
     }
     packetTracker.recordPacket(recoveryState.lastSeq, tMs, isHistory);
 
-    if (d.rssi !== undefined) recoveryState.rssi = Number(d.rssi);
+    applyRecoveryGsMeta(d, frameItem.statistics || null, isHistory);
     if (d.satellites !== undefined) recoveryState.satellites = Number(d.satellites);
     if (d.pressure !== undefined) recoveryState.pressure = Number(d.pressure);
     if (d.temp_imu !== undefined) recoveryState.tempImu = Number(d.temp_imu);
@@ -930,8 +1106,8 @@ function ingestFrame(frameItem, isHistory = false) {
     if (d.altitud_gps !== undefined) recoveryState.altitudGps = Number(d.altitud_gps);
 
     // Coordenadas
-    const lat = Number(d.latitude);
-    const lon = Number(d.longitude);
+    const lat = Number(d.latitud ?? d.latitude);
+    const lon = Number(d.longitud ?? d.longitude);
     if (Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180 && (lat !== 0 || lon !== 0)) {
         recoveryState.lat = lat;
         recoveryState.lon = lon;
@@ -969,14 +1145,15 @@ function ingestFrame(frameItem, isHistory = false) {
         }
     }
 
-    // Fase de vuelo
-    const text = d.status_label || (d.status !== undefined ? String(d.status) : null);
+    // Fase de vuelo (compatible con bitmask 65B/97B y status_label)
+    const code = Number.isFinite(Number(d.status)) ? Number(d.status) : null;
+    const text = d.status_label || (code !== null ? (STATUS_LABELS[code] || String(d.status)) : null);
     if (text && text !== recoveryState.statusText) {
         recoveryState.statusText = text;
         const pName = getPhaseName(text);
         addEvent(`Fase: ${pName}`);
 
-        if (!recoveryState.liftoffDetected && (text === "POWERED" || (alt !== null && alt > 30))) {
+        if (!recoveryState.liftoffDetected && (text === "POWERED" || (Number.isFinite(alt) && alt > 30))) {
             recoveryState.liftoffDetected = true;
             recoveryState.liftoffAt = tMs;
             addEvent("Despegue confirmado (T-0)");
@@ -987,11 +1164,12 @@ function ingestFrame(frameItem, isHistory = false) {
             let latched = recoveryState.vz;
             if (recent.length) latched = recent.reduce((a, s) => (s.v < a ? s.v : a), recent[0].v);
             recoveryState.touchdownVz = latched;
-            addEvent("¡Aterrizaje confirmado en tierra!");
+            addEvent("Aterrizaje confirmado en tierra");
         }
     }
 
     updateRecoveryMap();
+    if (!isHistory) renderRecoveryUI();
 }
 
 function addEvent(msg) {
@@ -1026,15 +1204,70 @@ function renderRecoveryUI() {
         missionTimeMs: missionTime(),
         status: recoveryState.statusText,
         rssi: recoveryState.rssi,
+        snr: recoveryState.snr,
         lossPercent: packetTracker.lossPercent,
         connected: recoveryState.connected,
         lastPacketAt: recoveryState.lastPacketAt,
         tempImu: recoveryState.tempImu
     });
 
-    // 2. Eventos Pirotécnicos de Recuperación (DROGUE & MAIN)
-    if (recoveryState.pinFrenado !== null) setAnnunciator("annunDrogue", "annunDrogueState", recoveryState.pinFrenado);
-    if (recoveryState.pinPrincipal !== null) setAnnunciator("annunMain", "annunMainState", recoveryState.pinPrincipal);
+    // RF Link & Beacon Priority Readouts
+    const rssiEl = $("recRfRssi");
+    if (rssiEl) {
+        rssiEl.textContent = (recoveryState.rssi !== null && Number.isFinite(recoveryState.rssi))
+            ? `${fmt(recoveryState.rssi, 0)} dBm`
+            : "--- dBm";
+    }
+    const rssiBarEl = $("recRssiBarFill");
+    if (rssiBarEl) {
+        if (recoveryState.rssi !== null && Number.isFinite(recoveryState.rssi)) {
+            const pct = Math.min(Math.max(((recoveryState.rssi + 120) / 80) * 100, 0), 100);
+            rssiBarEl.style.width = `${pct.toFixed(1)}%`;
+            rssiBarEl.classList.toggle("bad", recoveryState.rssi < -95);
+            rssiBarEl.classList.toggle("warn", recoveryState.rssi >= -95 && recoveryState.rssi < -75);
+        } else {
+            rssiBarEl.style.width = "0%";
+        }
+    }
+    const snrValEl = $("recRfSnr");
+    if (snrValEl) {
+        if (recoveryState.snr !== null && Number.isFinite(recoveryState.snr)) {
+            const sign = recoveryState.snr >= 0 ? "+" : "";
+            snrValEl.textContent = `${sign}${fmt(recoveryState.snr, 1)} dB`;
+        } else {
+            snrValEl.textContent = "--- dB";
+        }
+    }
+    const rxEl = $("recRfRx");
+    if (rxEl) rxEl.textContent = String(recoveryState.gs?.rxPackets ?? recoveryState.stats?.received ?? 0);
+    const lostEl = $("recRfLost");
+    if (lostEl) lostEl.textContent = String(recoveryState.gs?.rxLost ?? recoveryState.stats?.lost ?? 0);
+
+    const recSnrEl = $("recSnrBadge");
+    if (recSnrEl) {
+        if (recoveryState.gs && recoveryState.gs.gsLinkActive === false) {
+            recSnrEl.textContent = "SIN LORA (GS)";
+            recSnrEl.className = "status-badge crit";
+        } else if (recoveryState.snr !== null && Number.isFinite(recoveryState.snr)) {
+            const sign = recoveryState.snr >= 0 ? "+" : "";
+            recSnrEl.textContent = `SNR ${sign}${fmt(recoveryState.snr, 1)} dB`;
+            recSnrEl.className = recoveryState.snr < -5 ? "status-badge warn" : "status-badge ok";
+        } else {
+            recSnrEl.textContent = "SNR N/D";
+            recSnrEl.className = "status-badge";
+        }
+    }
+
+    // 2. Eventos Pirotécnicos de Recuperación (DROGUE & MAIN con overdue)
+    const phaseStr = String(recoveryState.statusText || "").toUpperCase();
+    const inFlight = recoveryState.liftoffDetected || (phaseStr && !["STANDBY", "PLATAFORMA", "PRE-LAUNCH"].includes(phaseStr));
+    const pastApogee = phaseStr.includes("APOGEE") || phaseStr.includes("APOGEO") || phaseStr.includes("DROGUE") || phaseStr.includes("MAIN") || phaseStr.includes("PRINCIPAL") || phaseStr.includes("LANDED") || phaseStr.includes("ATERRIZA");
+    const pastMain = phaseStr.includes("MAIN") || phaseStr.includes("PRINCIPAL") || phaseStr.includes("LANDED") || phaseStr.includes("ATERRIZA");
+    const drogueOverdue = Boolean(inFlight && pastApogee && Number(recoveryState.pinFrenado || 0) === 0);
+    const mainOverdue = Boolean(inFlight && pastMain && Number(recoveryState.pinPrincipal || 0) === 0);
+
+    if (recoveryState.pinFrenado !== null) setAnnunciator("annunDrogue", "annunDrogueState", recoveryState.pinFrenado, drogueOverdue);
+    if (recoveryState.pinPrincipal !== null) setAnnunciator("annunMain", "annunMainState", recoveryState.pinPrincipal, mainOverdue);
 
     // 3. Diagnóstico del Enlace en Panel Lateral
     $("diagRxCount").textContent = recoveryState.framesReceived.toLocaleString("es-AR");
@@ -1046,15 +1279,16 @@ function renderRecoveryUI() {
     if (recoveryState.lat !== null && recoveryState.lon !== null) {
         $("recLat").textContent = `${recoveryState.lat.toFixed(6)}°`;
         $("recLon").textContent = `${recoveryState.lon.toFixed(6)}°`;
-        $("recAlt").textContent = `${fmt(recoveryState.alt, 1)} m`;
+        const dispAlt = recoveryState.altitudGps !== null && Number.isFinite(recoveryState.altitudGps) ? recoveryState.altitudGps : recoveryState.alt;
+        $("recAlt").textContent = `${fmt(dispAlt, 1)} m`;
         $("recSats").textContent = recoveryState.satellites !== null ? String(recoveryState.satellites) : "--";
         const ageS = recoveryState.lastPacketAt !== null ? ((Date.now() - recoveryState.lastPacketAt) / 1000).toFixed(1) : "--";
         $("recLastTime").textContent = `Hace ${ageS} s`;
 
         // Distancia y rumbo
         if (recoveryState.baseLat !== null && recoveryState.baseLon !== null) {
-            $("baseLat").textContent = `${recoveryState.baseLat.toFixed(6)}°`;
-            $("baseLon").textContent = `${recoveryState.baseLon.toFixed(6)}°`;
+            if ($("baseLat")) $("baseLat").textContent = `${recoveryState.baseLat.toFixed(6)}°`;
+            if ($("baseLon")) $("baseLon").textContent = `${recoveryState.baseLon.toFixed(6)}°`;
 
             const distM = calculateDistanceM(recoveryState.baseLat, recoveryState.baseLon, recoveryState.lat, recoveryState.lon);
             if (distM >= 1000) {
@@ -1131,6 +1365,8 @@ function connectWebSocket() {
             const msg = JSON.parse(evt.data);
             if (msg.type === "telemetry") {
                 ingestFrame(msg);
+            } else if (msg.type === "statistics" && msg.statistics) {
+                applyRecoveryGsMeta(null, msg.statistics, false);
             } else if (msg.type === "connection") {
                 recoveryState.connected = !!msg.connected;
             }
@@ -1218,9 +1454,22 @@ $("btnMyPos").onclick = () => {
     });
 };
 
+/* ESTADO INICIAL DESDE /api/status */
+async function loadStatus() {
+    try {
+        const res = await fetch("/api/status", { cache: "no-store" });
+        if (!res.ok) return;
+        const st = await res.json();
+        recoveryState.connected = Boolean(st.connected);
+        if (st.frames_received !== undefined) recoveryState.framesReceived = st.frames_received;
+        if (st.statistics) applyRecoveryGsMeta(null, st.statistics, true);
+    } catch (_) {}
+}
+
 /* INICIALIZACIÓN */
 window.addEventListener("DOMContentLoaded", async () => {
     initRecoveryMap();
+    await loadStatus();
     await loadHistory();
     connectWebSocket();
     setInterval(renderRecoveryUI, 200);

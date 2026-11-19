@@ -3,10 +3,10 @@
  * High-contrast aerospace ground station frontend suite
  */
 
-// Apply saved theme immediately to prevent any white flash / FOUC
+// Apply saved theme immediately to prevent any white flash / FOUC (Dark-first Flight Deck)
 (function applyEarlyTheme() {
     try {
-        const saved = localStorage.getItem("ground_station_theme") || "light";
+        const saved = localStorage.getItem("ground_station_theme") || "dark";
         document.documentElement.setAttribute("data-theme", saved);
     } catch (e) {}
 })();
@@ -150,12 +150,47 @@ window.PacketTracker = window.PacketTracker || class PacketTracker {
 var PacketTracker = window.PacketTracker;
 
 /**
+ * Extracts Ground Station 32-byte extended USB header metadata (97B protocol)
+ * uniformly from statistics.gs snapshots or 97B frame fields.
+ */
+window.extractGsMeta = window.extractGsMeta || function extractGsMeta(d = null, stats = null) {
+    const gsStats = stats && typeof stats === "object" ? (stats.gs || null) : null;
+    const src = d && typeof d === "object" ? d : {};
+    const pick = key => (gsStats && gsStats[key] !== undefined && gsStats[key] !== null ? gsStats[key] : src[key]);
+
+    const numOrNull = val => {
+        if (val === undefined || val === null) return null;
+        const n = Number(val);
+        return Number.isFinite(n) ? n : null;
+    };
+    const boolOrNull = val => (val === undefined || val === null ? null : Boolean(val));
+
+    const protoVersion = numOrNull(pick("gs_proto_version"));
+
+    return {
+        protoVersion: protoVersion !== null ? protoVersion : 1,
+        rssi: numOrNull(pick("rssi")),
+        snr: numOrNull(pick("snr")),
+        gsUptimeMs: numOrNull(pick("gs_uptime_ms")),
+        rxPackets: numOrNull(pick("rx_packets")),
+        rxLost: numOrNull(pick("rx_lost")),
+        rxCrcErrors: numOrNull(pick("rx_crc_errors")),
+        rxSizeErrors: numOrNull(pick("rx_size_errors")),
+        txReboots: numOrNull(pick("tx_reboots")),
+        gsLinkActive: boolOrNull(pick("gs_link_active")),
+        gsRocketCrcOk: boolOrNull(pick("gs_rocket_crc_ok")),
+        gsTxReboot: boolOrNull(pick("gs_tx_reboot"))
+    };
+};
+
+/**
  * Updates the unified 6-cell global header
  *
  * @param {Object} options
  * @param {number} [options.missionTimeMs] - Milliseconds since liftoff (or 0)
  * @param {string|number} [options.status] - Flight stage key or label
  * @param {number|null} [options.rssi] - RF RSSI in dBm
+ * @param {number|null} [options.snr] - RF SNR in dB (97B GS header)
  * @param {number} [options.lossPercent] - Recent packet loss percentage
  * @param {boolean} [options.connected] - Link status boolean
  * @param {number|null} [options.lastPacketAt] - Epoch timestamp of last packet
@@ -164,6 +199,7 @@ window.updateGlobalHeader = window.updateGlobalHeader || function updateGlobalHe
     missionTimeMs = 0,
     status = null,
     rssi = null,
+    snr = null,
     lossPercent = 0.0,
     connected = false,
     lastPacketAt = null,
@@ -191,15 +227,20 @@ window.updateGlobalHeader = window.updateGlobalHeader || function updateGlobalHe
         phaseEl.textContent = window.getPhaseName(status);
     }
 
-    // 4. RF RSSI
+    // 4. RF RSSI (with SNR tooltip context)
     const rssiEl = window.$("rssi");
     if (rssiEl) {
         if (rssi !== null && Number.isFinite(Number(rssi))) {
             rssiEl.textContent = `${window.fmt(rssi, 0)} dBm`;
             rssiEl.className = "v num";
+            if (snr !== null && Number.isFinite(Number(snr))) {
+                const snrSign = Number(snr) >= 0 ? "+" : "";
+                rssiEl.title = `RSSI: ${window.fmt(rssi, 0)} dBm | SNR: ${snrSign}${window.fmt(snr, 1)} dB`;
+            }
         } else {
             rssiEl.textContent = "N/D";
             rssiEl.className = "v num nd";
+            rssiEl.title = "";
         }
     }
 
@@ -332,11 +373,14 @@ var setAnnunciator = window.setAnnunciator;
  * Theme toggle manager (light/dark)
  */
 window.initThemeManager = window.initThemeManager || function initThemeManager() {
+    const sunSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    const moonSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+
     const updateThemeUI = () => {
         const isDark = document.documentElement.getAttribute("data-theme") === "dark";
         const icon = window.$("themeIcon");
         const label = window.$("themeLabel");
-        if (icon) icon.textContent = isDark ? "☀️" : "🌙";
+        if (icon) icon.innerHTML = isDark ? sunSvg : moonSvg;
         if (label) label.textContent = isDark ? "CLARO" : "OSCURO";
     };
 
@@ -758,10 +802,24 @@ if (document.readyState === "loading") {
 
         const pressure = BASE_PRESS * Math.pow(1.0 - (Math.max(0.0, altura_actual) / 44330.0), 5.255);
         const status_label = STATUS_MAP[status] || "STANDBY";
+        const snr = Number((10.5 + (rssi + 54) * 0.35 + detNoise(seed + 91, -0.4, 0.4)).toFixed(2));
+        const gsUptimeMs = Math.round(t * 1000);
+        const gsStats = {
+            rssi,
+            snr,
+            gs_uptime_ms: gsUptimeMs,
+            rx_packets: seqNum,
+            rx_lost: 0,
+            rx_crc_errors: demoEngine.invalidCrcCount,
+            rx_size_errors: 0,
+            tx_reboots: 0,
+            gs_link_active: true,
+            gs_rocket_crc_ok: true
+        };
 
         return {
             timestamp: epochMs / 1000.0,
-            frame_length: 65,
+            frame_length: 97,
             crc_valid: true,
             crc_value: 0xA5C3,
             raw_hex: "AA55" + String(seqNum & 0xFFFF).padStart(4, "0"),
@@ -778,6 +836,18 @@ if (document.readyState === "loading") {
                 ground_speed: Number(ground_speed.toFixed(2)),
                 satellites,
                 rssi,
+                snr,
+                gs_proto_version: 1,
+                gs_flags: 0x13,
+                gs_rocket_crc_ok: true,
+                gs_link_active: true,
+                gs_tx_reboot: false,
+                gs_uptime_ms: gsUptimeMs,
+                rx_packets: seqNum,
+                rx_lost: 0,
+                rx_crc_errors: demoEngine.invalidCrcCount,
+                rx_size_errors: 0,
+                tx_reboots: 0,
                 temp_imu: Number(temp_imu.toFixed(1)),
                 accel_x: Number(accel_x.toFixed(3)),
                 accel_y: Number(accel_y.toFixed(3)),
@@ -792,7 +862,8 @@ if (document.readyState === "loading") {
                 received: seqNum,
                 invalid: demoEngine.invalidCrcCount,
                 lost: 0,
-                loss_percent: 0.0
+                loss_percent: 0.0,
+                gs: gsStats
             }
         };
     }
@@ -843,12 +914,12 @@ if (document.readyState === "loading") {
                 min_visibility_km: 5.0
             },
             manual_checklist: [
-                { id: "estructura", item: "Integridad estructural de fuselaje y aletas verificada", responsible: "Mecánica" },
-                { id: "motor", item: "Motor propulsor asegurado e ignitor instalado (sin armar)", responsible: "Propulsión" },
-                { id: "paracaidas", item: "Paracaídas Drogue y Principal plegados y líneas libres", responsible: "Recuperación" },
-                { id: "pirotecnia", item: "Cargas pirotécnicas conectadas y llave maestra en SAFE", responsible: "Seguridad" },
-                { id: "rango", item: "Perímetro de seguridad despejado y espacio aéreo libre", responsible: "RSO" },
-                { id: "baterias", item: "Baterías de aviónica y estación terrena al 100% de carga", responsible: "Aviónica" }
+                { id: "propulsion", item: "PROPULSIÓN", responsible: "Propulsión" },
+                { id: "avionica", item: "AVIÓNICA", responsible: "Aviónica" },
+                { id: "recuperacion", item: "RECUPERACIÓN", responsible: "Recuperación" },
+                { id: "estructuras", item: "ESTRUCTURAS", responsible: "Estructuras" },
+                { id: "segmento_terreno", item: "SEGMENTO TERRENO", responsible: "Comunicaciones" },
+                { id: "meteorologia", item: "METEOROLOGÍA", responsible: "Meteorología" }
             ]
         }
     };
@@ -868,12 +939,12 @@ if (document.readyState === "loading") {
                 id: 3,
                 timestamp: nowSec - 45,
                 iso_time: new Date((nowSec - 45) * 1000).toISOString(),
-                action: "VERIFICACION_OPERADOR",
-                item_id: "estacion_terrena",
-                item_label: "Estación Terrena y Subsistemas",
+                action: "ENCUESTA_SUBSISTEMA",
+                item_id: "segmento_terreno",
+                item_label: "SEGMENTO TERRENO (COMUNICACIONES)",
                 state: "GO",
                 operator: "OPERADOR_DEMO",
-                details: null
+                details: JSON.stringify({ responsible: "Líder Comunicaciones" })
             },
             {
                 id: 2,
@@ -890,12 +961,12 @@ if (document.readyState === "loading") {
                 id: 1,
                 timestamp: nowSec - 140,
                 iso_time: new Date((nowSec - 140) * 1000).toISOString(),
-                action: "CHECKLIST_MANUAL",
-                item_id: "baterias",
-                item_label: "Baterías de aviónica y estación terrena al 100% de carga",
+                action: "ENCUESTA_SUBSISTEMA",
+                item_id: "avionica",
+                item_label: "AVIÓNICA",
                 state: "GO",
                 operator: "OPERADOR_DEMO",
-                details: JSON.stringify({ responsible: "Aviónica" })
+                details: JSON.stringify({ responsible: "Líder Aviónica" })
             }
         ];
         try {
@@ -945,7 +1016,19 @@ if (document.readyState === "loading") {
                     received: demoEngine.frameSeq,
                     invalid: demoEngine.invalidCrcCount,
                     lost: 0,
-                    loss_percent: 0.0
+                    loss_percent: 0.0,
+                    gs: {
+                        rssi: -56,
+                        snr: 9.8,
+                        gs_uptime_ms: Math.round(demoEngine.simTimeSec * 1000),
+                        rx_packets: demoEngine.frameSeq,
+                        rx_lost: 0,
+                        rx_crc_errors: demoEngine.invalidCrcCount,
+                        rx_size_errors: 0,
+                        tx_reboots: 0,
+                        gs_link_active: true,
+                        gs_rocket_crc_ok: true
+                    }
                 },
                 station: {
                     serial_port: "SIMULADOR_DEMO (10 Hz)",
@@ -1177,6 +1260,9 @@ if (document.readyState === "loading") {
         return "ATERRIZADO";
     }
 
+    const chevDownSvg = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>';
+    const expandSvg = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
+
     function updateDemoHudUI() {
         const t = demoEngine.simTimeSec;
         const timeEl = document.getElementById("demoHudTime");
@@ -1193,7 +1279,7 @@ if (document.readyState === "loading") {
             phaseEl.textContent = getPhaseBadgeLabel(t);
         }
         if (minBtn) {
-            minBtn.textContent = demoEngine.minimized ? "▢" : "▼";
+            minBtn.innerHTML = demoEngine.minimized ? expandSvg : chevDownSvg;
             minBtn.title = demoEngine.minimized ? "Expandir barra de control" : "Minimizar barra de control";
         }
 
@@ -1208,22 +1294,27 @@ if (document.readyState === "loading") {
     function mountDemoHud() {
         if (document.getElementById("demoControlHud")) return;
 
+        const pauseSvg = '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+        const playSvg = '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6,4 20,12 6,20"/></svg>';
+
         const hud = document.createElement("div");
         hud.id = "demoControlHud";
         hud.className = "demo-hud";
         hud.innerHTML = `
             <div class="demo-hud-header">
                 <span class="demo-hud-badge" title="Simulador de telemetría en vivo">
-                    🚀 DEMO <span id="demoHudPhase" style="opacity:0.9; font-weight:800;"></span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    DEMO <span id="demoHudPhase" style="opacity:0.85; font-weight:700;"></span>
                 </span>
                 <span class="demo-hud-sd-badge" title="Grabación en base de datos desactivada para proteger la vida útil de la tarjeta SD en la Raspberry Pi">
-                    💾 SD PROTEGIDA (BD OFF)
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    SD PROTEGIDA · BD OFF
                 </span>
-                <button type="button" class="demo-hud-btn play-btn" id="demoBtnPlay" title="Pausar / Reanudar simulación">⏸</button>
+                <button type="button" class="demo-hud-btn play-btn" id="demoBtnPlay" title="Pausar / Reanudar simulación">${pauseSvg}</button>
                 <span class="demo-hud-time" id="demoHudTime">${demoEngine.simTimeSec.toFixed(1)}s / 290s</span>
                 <div class="demo-hud-header-actions">
                     <button type="button" class="demo-hud-btn" id="demoBtnSpeed" title="Velocidad de reproducción">1x</button>
-                    <button type="button" class="demo-hud-btn min-btn" id="demoBtnMin" title="Minimizar / Expandir control demo">▼</button>
+                    <button type="button" class="demo-hud-btn min-btn" id="demoBtnMin" title="Minimizar / Expandir control demo">${chevDownSvg}</button>
                 </div>
             </div>
             <div class="demo-hud-body" id="demoHudBody">
@@ -1246,7 +1337,7 @@ if (document.readyState === "loading") {
         const playBtn = document.getElementById("demoBtnPlay");
         playBtn?.addEventListener("click", () => {
             demoEngine.paused = !demoEngine.paused;
-            playBtn.textContent = demoEngine.paused ? "▶" : "⏸";
+            playBtn.innerHTML = demoEngine.paused ? playSvg : pauseSvg;
             playBtn.classList.toggle("paused", demoEngine.paused);
         });
 
@@ -1279,7 +1370,7 @@ if (document.readyState === "loading") {
             demoEngine.minimized = !demoEngine.minimized;
             hud.classList.toggle("minimized", demoEngine.minimized);
             if (bodyWrap) bodyWrap.style.display = demoEngine.minimized ? "none" : "";
-            minBtn.textContent = demoEngine.minimized ? "▢" : "▼";
+            minBtn.innerHTML = demoEngine.minimized ? expandSvg : chevDownSvg;
             minBtn.title = demoEngine.minimized ? "Expandir barra de control" : "Minimizar barra de control";
         });
 
