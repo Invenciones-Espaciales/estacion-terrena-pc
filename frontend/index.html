@@ -2402,7 +2402,7 @@ function renderText() {            // ~10 Hz
                 gmeterStatus.textContent = "FRENADO AERO";
                 gmeterStatus.className = "trend-pill warn";
             } else {
-                gmeterStatus.textContent = absG < 0.2 ? "MICROGRAV" : "NOMINAL";
+                gmeterStatus.textContent = absG < 0.2 ? "CAÍDA LIBRE" : "NOMINAL";
                 gmeterStatus.className = "trend-pill";
             }
         }
